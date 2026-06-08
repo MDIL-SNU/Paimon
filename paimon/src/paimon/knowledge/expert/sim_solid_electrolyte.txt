@@ -1,0 +1,200 @@
+## Preparation: Build Argyrodite Structures and Select Targets
+
+### Define compositions and enforce charge neutrality
+1. Set the general formula to Li24+xM4S20X4 with M ∈ {Si, Ge, Sn, P, As, Sb} and X ∈ {Cl, Br, I}.
+2. Enforce charge neutrality by assuming anion charges S2− and X−; adjust the Li count (x) accordingly to satisfy overall neutrality.
+   - Negative constraint: Do not assume other anion charge states when computing x.
+
+### Place atoms on Wyckoff sites
+1. Place 24 Li atoms at the 24g Wyckoff positions.
+2. If the composition requires Li beyond 24, randomly distribute the excess Li over the 48h and 16e sites.
+   - Conditional branch: Only place excess Li if Li count > 24; otherwise skip.
+3. Place the 4 M cations at the 4b sites.
+4. Place S at the 16e sites to form MS4 tetrahedra.
+
+### Apply anion-site disorder (S/X disorder)
+1. Target an anion disorder level from {0%, 25%, 50%, 75%, 100% X@4c}.
+2. For the chosen X@4c fraction, randomly assign X to the 4c sites to achieve the specified percentage.
+3. Fill remaining anion sites with S.
+   - Negative constraint: Do not apply the heating (“300→1200 K”) trajectories described below to compute diffusivity; they are only for PES benchmarking.
+   - Implicit sequencing: Assign disorder before any relaxation or MD.
+
+### Initial cell dimensions and symmetry
+1. Use the primitive argyrodite unit cell (≈ 10 Å on a side) to minimize periodic self-interaction in later MD.
+2. Retain the cubic cell shape for argyrodite systems throughout structural relaxation and subsequent steps.
+   - Negative constraint: Do not relax the cell shape away from cubic for argyrodites.
+
+---
+
+## DFT Static Relaxation (0 K)
+
+### Convergence determination (prior to production runs)
+1. Choose plane-wave cutoff energy and k-point mesh empirically to satisfy all:
+   - Total energy convergence within 10 meV/atom.
+   - Force convergence within 0.02 eV/Å.
+   - Stress convergence within 10 kbar.
+2. Use these converged settings for all production relaxations.
+   - Implicit sequencing: Determine convergence before launching production relaxations.
+
+### Production relaxation
+1. Use PAW pseudopotentials and the PBE exchange–correlation functional.
+2. Relax atomic positions until the maximum force is below 0.04 eV/Å.
+3. Keep the cell shape cubic (fixed-shape relaxation).
+4. Save the relaxed structure for MD.
+   - Implicit sequencing: Use the relaxed structure as the starting point for both DFT-MD and MLIP-MD.
+
+---
+
+## AIMD for Li Diffusivity (DFT-MD at Fixed Temperatures)
+
+### Simulation setup
+1. Use the relaxed 0 K structure as input.
+2. Use Γ-point electronic sampling.
+3. Run NVT ensemble with a Nosé–Hoover thermostat.
+4. Set the time step to 2 fs.
+   - Conditional branch: If hydrogen is present (not the case for argyrodites), use 1 fs; otherwise keep 2 fs.
+5. Choose fixed temperatures: 800 K, 1000 K, and 1200 K.
+
+### Trajectory generation
+1. For each temperature, run 5 independent trajectories of 100 ps each.
+2. Assign different random initial velocities for each replicate at a given temperature.
+   - Negative constraint: Do not reuse identical velocity seeds across replicates.
+3. Record atomic positions at every MD step (2 fs) or at a cadence sufficient for MSD computation (retain full-resolution data if storage permits).
+4. Repeat for each target composition.
+
+---
+
+## MLIP-based MD for Li Diffusivity (Optional Alternative to AIMD)
+
+### Model selection
+1. Use either:
+   - The pretrained SevenNet-0 universal MLIP (release dated 2024-07-11), or
+   - A fine-tuned SevenNet-0 variant (reEWC) trained on Li6PS5Cl (LPSC) as described below (optional, if reproducing MLIP-based results).
+
+### Optional: Fine-tune SevenNet-0 with reEWC (LPSC dataset)
+1. Build the LPSC fine-tuning dataset:
+   - Composition/configuration: Li6PS5Cl with 50% Cl@4c (two Cl at the 4a and 4c sites; other anion positions filled by S).
+   - Generate AIMD trajectories at 600 K and 1000 K (NVT, Nosé–Hoover, Γ-point, 2 fs, 100 ps per temperature).
+   - Sample snapshots every 200 fs (500 frames per temperature, 1000 total).
+   - Split into train/validation with a 9:1 random split.
+2. Training configuration:
+   - Optimizer: Adam.
+   - Total epochs: 400.
+   - Learning-rate schedule: Cosine annealing with linear warm-up.
+     - Warm-up: increase from 0 to 1e−4 over the first 50 epochs.
+     - Decay: from 1e−4 to 0 over the next 150 epochs; repeat 2 cycles to reach 400 epochs.
+   - Loss: Huber loss with δ = 0.01.
+   - Total loss includes:
+     - Energy term on per-atom normalized energy,
+     - Force term with weight λF = 1,
+     - Stress term with weight λS = 0.01.
+3. EWC/reEWC regularization and Replay:
+   - EWC λ = 1e6; reEWC λ = 1e5.
+   - Fisher Information Matrix (diagonal approximation): compute on 1,154,095 pretrained configurations with Huber loss < 0.000726.
+   - Replay set: 10% random sample of the MPtrj dataset; use mini-batch alternation (fine-tuning batch followed by Replay batch of equal size).
+   - Negative constraint: Do not use Replay-only (without EWC) if MD stability across chemistries is critical; reEWC is used to constrain parameter drift.
+
+### MLIP-MD simulation setup (LAMMPS)
+1. Use the relaxed 0 K DFT structure of the target argyrodite as the initial geometry.
+2. Use NVT ensemble with a Nosé–Hoover thermostat.
+3. Set the time step to 2 fs.
+4. Choose fixed temperatures: 800 K, 1000 K, and 1200 K.
+5. For each temperature, run 5 independent trajectories of 100 ps each with different random initial velocities.
+6. Use a simulation cell with linear dimensions ≈ 10 Å to minimize periodic self-interaction.
+   - Negative constraint: Avoid substantially smaller cells that increase periodic self-interaction artifacts.
+
+---
+
+## Analysis: Li Self-Diffusivity Extraction from MD
+
+### Compute time-averaged MSD (multi–time-origin)
+1. For each trajectory and temperature, compute the mean-squared displacement (MSD) for Li ions using the time-averaged method (multiple time origins).
+2. Use the definition:
+   - MSD(τ) = ⟨ (1/N) Σi |ri(t + τ) − ri(t)|² ⟩t,
+   where N is the number of Li ions, ri(t) is the position of the ith Li at time t, and ⟨·⟩t denotes averaging over time origins.
+
+### Trim non-diffusive and low-statistics regions
+1. Discard the initial “ballistic” region where MSD < 4.5 Å² (apply the same cutoff at all temperatures).
+2. Discard data beyond 70% of the total simulation time (retain only the first 70% after ballistic trimming).
+
+### Fit the Einstein relation and compute D
+1. Fit the trimmed MSD(t) data to the Einstein relation:
+   - D = (1 / (6 t)) × MSD(t).
+2. Extract D from the linear fit slope for each trajectory.
+
+### Aggregate across replicates and report
+1. For each composition and temperature, compute the mean of D over the 5 independent runs.
+2. Compute the standard deviation across the 5 runs.
+3. Report the mean and standard deviation for each composition at 800 K, 1000 K, and 1200 K.
+
+---
+
+## Optional Stability Diagnostic: Quasi-melting Consistency Check
+
+### Detect quasi-melting events
+1. For each composition at 1000 K and 1200 K, run 5 independent MD trajectories (as above).
+2. Compute the MSD rate (slope of MSD vs time) for all non-Li ions.
+3. Flag a trajectory as quasi-melted if all non-Li ions have MSD rate > 0.36 Å²/ps.
+   - Negative constraint: Do not classify as quasi-melting if only a subset of non-Li ions exceed the threshold.
+4. Compute the quasi-melting ratio as the fraction of the 5 runs that satisfy the criterion.
+
+### Interpret results
+1. Use DFT-MD as the reference behavior when available.
+2. Compare MLIP-MD quasi-melting ratios to DFT-MD to identify PES softening (overprediction) or stiffening (underprediction) pathologies.
+
+---
+
+## PES Benchmark Trajectories (Do Not Use for Diffusivity)
+
+### Generate PES snapshots for parity/softening analysis (optional context)
+1. Optimize the structure at 0 K as above.
+2. Run a single NVT AIMD trajectory:
+   - Nosé–Hoover thermostat, Γ-point sampling, 2 fs time step, total duration 100 ps.
+   - Gradually heat from 300 K to 1200 K over the 100 ps.
+3. Sample structures every 200 fs (500 snapshots per composition).
+4. Negative constraint: Do not use these heating snapshots to compute diffusivity; use only fixed-temperature trajectories for D extraction.
+
+---
+
+## Software Implementation Notes
+
+VASP (DFT relaxation and AIMD)
+- Used in: DFT Static Relaxation (Section “DFT Static Relaxation (0 K)”), AIMD for Li Diffusivity (Section “AIMD for Li Diffusivity (DFT-MD at Fixed Temperatures)”), PES Benchmark Trajectories (Section “PES Benchmark Trajectories (Do Not Use for Diffusivity)”).
+- Version: not specified.
+- Pseudopotentials: PAW (projector-augmented-wave), exact files not specified.
+- Exchange–correlation: PBE (GGA).
+- k-point sampling for AIMD: Γ-point only.
+- Convergence targets for static convergence testing: ≤10 meV/atom (energy), ≤0.02 eV/Å (forces), ≤10 kbar (stress).
+- Relaxation force threshold: <0.04 eV/Å.
+- Thermostat: Nosé–Hoover.
+- Time step: 2 fs (argyrodites with no hydrogen); conditional 1 fs for H-containing systems (not used here).
+
+LAMMPS (MLIP-based MD)
+- Used in: MLIP-based MD for Li Diffusivity (Section “MLIP-based MD for Li Diffusivity (Optional Alternative to AIMD)”).
+- Version: not specified.
+- Ensemble: NVT with Nosé–Hoover thermostat.
+- Time step: 2 fs.
+- Cell size: ≈ 10 Å.
+
+ASE (MLIP relaxations; optional)
+- Used in: (Optional) Relaxations with MLIP models prior to MLIP-MD if performing MLIP-only workflows (not required for DFT-based preparation).
+- Version: not specified.
+
+SevenNet-0 (MLIP model) and SevenNet training framework
+- Used in: MLIP model selection and optional fine-tuning (Section “MLIP-based MD for Li Diffusivity (Optional Alternative to AIMD)”).
+- SevenNet-0 pretrained model release date: 2024-07-11.
+- reEWC fine-tuning specifics:
+  - Optimizer: Adam.
+  - Epochs: 400.
+  - LR schedule: warm-up to 1e−4 over 50 epochs; cosine decay to 0 over next 150 epochs; 2 cycles total.
+  - Loss: Huber, δ = 0.01; force weight λF = 1; stress weight λS = 0.01.
+  - EWC λ = 1e6; reEWC λ = 1e5.
+  - FIM diagonal computed on 1,154,095 pretrained configurations with Huber loss < 0.000726.
+  - Replay: 10% random sample of MPtrj; mini-batch alternation of fine-tuning and Replay batches.
+- File names, checkpoints, and exact code versions: not specified.
+
+METHOD_UNAVAILABLE
+- Exact plane-wave cutoff energy values and k-point meshes (only convergence criteria specified).
+- Random seeds used for initial velocities.
+- Post-processing scripts for MSD computation and trimming.
+- Conversion of diffusivity to ionic conductivity (Haven ratio, Nernst–Einstein parameters, charge carrier density not provided).

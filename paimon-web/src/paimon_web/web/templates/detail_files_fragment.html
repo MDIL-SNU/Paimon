@@ -1,0 +1,96 @@
+{% if single_subtask %}
+<!-- Single agent workflow: show files inline -->
+<div class="detail-section">
+    <div class="files-header">
+        {% if selected_dir_name %}
+        <h3>{{ single_subtask.subtask_name }}</h3>
+        {% else %}
+        <h3>Working Directory</h3>
+        {% endif %}
+        <div>
+            {% if selected_dir_name %}
+            <button class="btn-small"
+                    hx-get="/runs/{{ env_id }}/detail-files-fragment"
+                    hx-target="#detail-files"
+                    hx-swap="innerHTML">Back</button>
+            {% endif %}
+            <button id="refresh-files-btn" class="btn-small btn-refresh"
+                    hx-get="/runs/{{ env_id }}/detail-files-fragment{% if selected_dir_name %}?subtask={{ selected_dir_name }}{% endif %}"
+                    hx-target="#detail-files"
+                    hx-swap="innerHTML">Refresh</button>
+        </div>
+    </div>
+    <script>initFileTree("{{ env_id }}", "{{ single_subtask.dir_name }}");</script>
+    {% if single_subtask.output_tree %}
+    <div class="file-tree">
+        {% for node in single_subtask.output_tree %}
+            {% include 'partials/_file_tree_node.html' %}
+        {% endfor %}
+    </div>
+    {% elif single_subtask.output_files %}
+    <div class="file-list-inline" data-file-count="{{ single_subtask.output_files|length }}">
+        {% for file in single_subtask.output_files %}
+        <div class="file-item-inline" data-filename="{{ file }}">
+            <code class="file-name">{{ file }}</code>
+            <div class="file-actions">
+                <button class="btn-small"
+                        onclick="viewFileInline('{{ file }}', this)">View</button>
+                {% if file.endswith('.extxyz') or file.endswith('.xyz') or file.endswith('.cif') or file.endswith('.poscar') or file.endswith('.lammps-data') %}
+                <button class="btn-small"
+                        onclick="viewStructureInline('{{ file }}', this)">Structure</button>
+                {% endif %}
+                <a href="/api/runs/{{ env_id }}/subtasks/{{ single_subtask.dir_name }}/files/{{ file }}/download"
+                   class="btn-small">Download</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="no-files">No files yet</p>
+    {% endif %}
+</div>
+{% else %}
+<!-- Multi-subtask workflow: show subtask list -->
+<div class="detail-section">
+    <div class="files-header">
+        <h3>Subtasks ({{ run.subtasks|length }})</h3>
+        <button id="refresh-files-btn" class="btn-small btn-refresh"
+                hx-get="/runs/{{ env_id }}/detail-files-fragment"
+                hx-target="#detail-files"
+                hx-swap="innerHTML">Refresh</button>
+    </div>
+    <div class="subtask-list">
+        {% for st in run.subtasks %}
+        <div class="subtask-card">
+            <div class="subtask-card-header">
+                <h4>{{ st.name }}</h4>
+                <div class="subtask-actions">
+                    <a href="/runs/{{ env_id }}/subtasks/{{ st.dir_name }}/chat"
+                       class="btn-detail-small">Chat</a>
+                    <button class="btn-detail-small"
+                            hx-get="/runs/{{ env_id }}/detail-files-fragment?subtask={{ st.dir_name }}"
+                            hx-target="#detail-files"
+                            hx-swap="innerHTML">Browse</button>
+                </div>
+            </div>
+            <p><strong>Agent:</strong> {{ st.agent }}</p>
+            <p><strong>Type:</strong> {{ st.primary_task_type }}</p>
+        </div>
+        {% endfor %}
+        {% if run.has_external_files %}
+        <div class="subtask-card subtask-card-external">
+            <div class="subtask-card-header">
+                <h4>External Files</h4>
+                <div class="subtask-actions">
+                    <button class="btn-detail-small"
+                            hx-get="/runs/{{ env_id }}/detail-files-fragment?subtask=external_files"
+                            hx-target="#detail-files"
+                            hx-swap="innerHTML">Browse</button>
+                </div>
+            </div>
+            <p>User-uploaded files</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

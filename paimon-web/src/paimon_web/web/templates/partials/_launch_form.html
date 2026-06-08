@@ -1,0 +1,126 @@
+<form hx-post="/api/launch" hx-indicator="#launch-button">
+    <div class="session-name-row">
+        <label class="session-label">Session Name</label>
+        <input
+            type="text"
+            id="task-input"
+            name="task_name"
+            placeholder="Session name"
+            class="session-input"
+            autofocus
+            required
+        />
+    </div>
+
+    <div class="launch-config-panel">
+        <div class="config-grid">
+            <div class="config-item">
+                <label class="config-label">Agent</label>
+                <select id="agent-select" name="agent" class="config-select">
+                    <option value="Orchestrator">Orchestrator</option>
+                    <option value="LAMMPS agent">LAMMPS agent</option>
+                    <option value="ASE agent">ASE agent</option>
+                    <option value="Packmol agent">Packmol agent</option>
+                    <option value="MD analyzer">MD analyzer</option>
+                    <option value="Monolithic agent">Monolithic agent</option>
+                    <option value="Chatting">Chatting</option>
+                </select>
+            </div>
+
+            <div class="config-item">
+                <label class="config-label">LLM</label>
+                <select id="llm-select" name="llm" class="config-select">
+                    <option value="gpt-5-mini">GPT-5 mini</option>
+                    <option value="gpt-5">GPT-5</option>
+                </select>
+            </div>
+
+            <div class="config-item">
+                <label class="config-label">Reasoning</label>
+                <select id="reasoning-select" name="reasoning" class="config-select">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="minimal">Minimal</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="pref-section">
+            <label class="config-label">Autonomy Level</label>
+            <div class="pref-cards">
+                <label class="pref-card">
+                    <input type="radio" name="user_preference" value="computational_researcher" />
+                    <div class="pref-card-inner">
+                        <span class="pref-title">Researcher</span>
+                        <span class="pref-desc">Ask every param</span>
+                    </div>
+                </label>
+                <label class="pref-card">
+                    <input type="radio" name="user_preference" value="computational_pi" checked />
+                    <div class="pref-card-inner">
+                        <span class="pref-title">Research director</span>
+                        <span class="pref-desc">Major milestones</span>
+                    </div>
+                </label>
+                <label class="pref-card">
+                    <input type="radio" name="user_preference" value="experimentalist" />
+                    <div class="pref-card-inner">
+                        <span class="pref-title">Experimentalist</span>
+                        <span class="pref-desc">No tech questions</span>
+                    </div>
+                </label>
+                <label class="pref-card">
+                    <input type="radio" name="user_preference" value="autonomous" />
+                    <div class="pref-card-inner">
+                        <span class="pref-title">Autonomous</span>
+                        <span class="pref-desc">Minimal interaction</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="advanced-options">
+            <button type="button" class="btn-toggle-advanced"
+                    onclick="toggleAdvancedOptions(this)">
+                &#9654; Advanced Options
+            </button>
+            <div class="kv-section" style="display:none">
+                <div id="kv-rows"></div>
+                <button type="button" class="btn-small btn-add-kv"
+                        onclick="addKvRow()">+ Add</button>
+            </div>
+        </div>
+
+        <div class="launch-zone">
+            <button type="submit" id="launch-button" class="btn-launch">
+                <span class="htmx-indicator">Launching...</span>
+                <span class="normal-text">Launch Run</span>
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+let _kvCounter = 0;
+
+function toggleAdvancedOptions(btn) {
+    const section = btn.nextElementSibling;
+    const hidden = section.style.display === 'none';
+    section.style.display = hidden ? 'flex' : 'none';
+    btn.innerHTML = (hidden ? '&#9660;' : '&#9654;') + ' Advanced Options';
+}
+
+function addKvRow() {
+    const container = document.getElementById('kv-rows');
+    const idx = _kvCounter++;
+    const row = document.createElement('div');
+    row.className = 'kv-row';
+    row.innerHTML =
+        '<input type="text" name="extra_key_' + idx + '" placeholder="key" class="kv-key" />' +
+        '<input type="text" name="extra_val_' + idx + '" placeholder="value" class="kv-val" />' +
+        '<button type="button" class="btn-small kv-remove" onclick="this.parentElement.remove()">x</button>';
+    container.appendChild(row);
+}
+</script>

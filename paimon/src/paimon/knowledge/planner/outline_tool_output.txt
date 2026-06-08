@@ -1,0 +1,15 @@
+<system>
+Plan outline received.
+These are the detailed descriptions of the agents included in your plan outline.
+</system>
+
+<agent_descriptions>
+{agent_longs}
+</agent_descriptions>
+
+<system>
+From this point on, the agents will follow your instructions and perform simulations as you create subtasks.
+Remind the <instruction>, <output_files>, and <output_values> sections.
+
+**You have not done anything yet; you have only created an "outline" of a plan. Actual work is performed by the 'create_subtask' tool.**
+</system>

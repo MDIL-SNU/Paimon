@@ -1,0 +1,56 @@
+<sevennet_guide>
+SevenNet is a pre-trained, universal machine-learning interatomic potential (uMLIP) family with high accuracy across a wide range of systems.
+
+Available models: 7net-0, 7net-l3i5, 7net-omat, 7net-mf-ompa, 7net-omni
+
+<capabilities>
+- Delivers accurate and reliable results for atomistic systems and conditions
+- Supports explicit D3 dispersion for van der Waals interactions
+- Predicts energy, forces, and stress
+- Requires no tuning or configuration—it works out of the box
+- Accurately describes both short- and long-range interactions
+- You do not need to assign charges manually—just place the atoms, and the force field will automatically capture the correct behavior based on the local environment
+</capabilities>
+
+<limitations>
+- Cannot predict dielectric or electronic properties
+- Cannot predict atomic spin states, and thus does not support magnetic property simulations
+- The system must remain electrically neutral; unlike DFT, you cannot simulate charged systems by adjusting total electrons.
+</limitations>
+
+<usage>
+Models without modality (fidelity, or task).
+```python
+from sevenn.calculator import SevenNetCalculator
+calc = SevenNetCalculator(model='7net-0', device='cuda')
+```
+
+Models with modality.
+```python
+from sevenn.calculator import SevenNetCalculator
+calc = SevenNetCalculator(model='7net-mf-ompa', modal='mpa', device='cuda')
+```
+
+SevenNet also supports CUDA-accelerated D3 calculations.
+```python
+from sevenn.calculator import SevenNetD3Calculator
+calc = SevenNetD3Calculator(model='7net-0', device='cuda')
+```
+
+Use device="cuda" by default.
+
+Always enable tensor-product acceleration for faster inference.
+Pass enable_flash=True (default choice) or enable_cueq=True.
+These flags are mutually exclusive — do not set both.
+```python
+from sevenn.calculator import SevenNetCalculator
+calc = SevenNetCalculator(model='7net-0', device='cuda', enable_flash=True)
+```
+</usage>
+
+<postprocessing> 
+When you use or post-process results from the SevenNet force field: 
+- There are no explicit charges, and each atom type corresponds to an element. 
+- There are no explicit bonds or angles. Atoms are simply treated as point particles. 
+</postprocessing> 
+</sevennet_guide>

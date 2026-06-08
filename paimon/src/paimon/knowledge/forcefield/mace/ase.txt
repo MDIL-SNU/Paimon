@@ -1,0 +1,53 @@
+<mace_guide>
+MACE is a pre-trained, universal machine-learning interatomic potential (uMLIP) family based on higher-order equivariant message passing, with high accuracy across a wide range of systems.
+
+Available models: mace-mp, mace-mpa, mace-omat, mace-matpes, mace-off (organic only), mace-ani-cc (H/C/N/O only)
+
+<capabilities>
+- Delivers accurate and reliable results for atomistic systems and conditions
+- Supports D3 dispersion correction (pass dispersion=True)
+- Predicts energy, forces, and stress
+- Requires no tuning or configuration—it works out of the box
+- You do not need to assign charges manually—just place the atoms, and the force field will automatically capture the correct behavior based on the local environment
+</capabilities>
+
+<limitations>
+- Cannot predict dielectric or electronic properties
+- Cannot predict atomic spin states
+- The system must remain electrically neutral
+- mace-off and mace-ani-cc cover a limited set of elements (organic molecules only)
+- mace-ani-cc is limited to H, C, N, O elements
+</limitations>
+
+<usage>
+Default usage — mace-mpa-0-medium (materials, 89 elements):
+```python
+from mace.calculators import mace_mp
+calc = mace_mp(model="medium-mpa-0", device="cuda")
+```
+
+`mace_mp()` without arguments also defaults to `medium-mpa-0` (from mace-torch v0.3.10+).
+The model is downloaded automatically on first use and cached locally — no manual file path needed.
+
+With D3 dispersion correction:
+```python
+calc = mace_mp(model="medium-mpa-0", dispersion=True, device="cuda")
+```
+
+Other available model strings for mace_mp: "small", "medium", "large", "medium-mpa-0", "medium-omat-0"
+
+Organic molecules — use mace_off:
+```python
+from mace.calculators import mace_off
+calc = mace_off(model="medium", device="cuda")
+```
+
+Use device="cuda" by default.
+</usage>
+
+<postprocessing>
+When you use or post-process results from the MACE force field:
+- There are no explicit charges, and each atom type corresponds to an element.
+- There are no explicit bonds or angles. Atoms are simply treated as point particles.
+</postprocessing>
+</mace_guide>

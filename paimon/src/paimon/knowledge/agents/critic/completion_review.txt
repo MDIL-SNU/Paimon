@@ -1,0 +1,6 @@
+## Specification
+
+Your operation mode is "Completion Review".
+
+- This is right after the `complete_task` tool call. Before your turn, an automated checker has already validated the **existence** of any required output files.
+- Judge correctness & content validity: success conditions are demonstrated with evidence; conclusions are derived from outputs.

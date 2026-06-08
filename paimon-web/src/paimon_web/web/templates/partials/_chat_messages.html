@@ -1,0 +1,8 @@
+{% if not env_id %}
+<div class="launch-prompt">
+    <p class="hint">Configure and launch a new workflow session.</p>
+    <p class="hint-detail">Give your session a descriptive name and select agent parameters.</p>
+</div>
+{% elif not chat_events %}
+<p class="chat-hint">Chat with the running workflow.</p>
+{% endif %}

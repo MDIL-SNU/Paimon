@@ -1,0 +1,63 @@
+<div class="detail-section">
+    <div class="status-title-row">
+        <h3>Status</h3>
+        <div class="status-badges">
+            <code class="run-id">{{ env_id[:8] }}</code>
+            <span class="status-badge status-{{ status }}">{{ status }}</span>
+            <div class="config-wrapper">
+                <span class="gear">⚙</span>
+                <div class="config-tooltip">
+                    <ul>
+                    {% for key, value in run_config.items() %}
+                        {% if key == 'extra' and value is mapping %}
+                            {% for k, v in value.items() %}
+                            <li><strong>{{ k }}</strong>: {{ v }}</li>
+                            {% endfor %}
+                        {% else %}
+                        <li>
+                            <strong>{{ key }}</strong>: {{ value }}
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="task-description">
+        <strong>Session:</strong> {{ task }}
+    </div>
+
+    {% if is_waiting %}
+    <div class="waiting-message">
+        <p>Initializing workflow...</p>
+        <p class="hint">Details will appear once the run starts.</p>
+    </div>
+    {% else %}
+    <div class="stats-grid">
+        <div class="stat">
+            <span class="label">Process ID</span>
+            <span class="value">{{ process_status.pid if process_status and process_status.is_live else "—" }}</span>
+        </div>
+        <div class="stat">
+            <span class="label">Total Tokens</span>
+            <span class="value">{{ "{:,}".format(token_usage.total_tokens) if token_usage else "—" }}</span>
+        </div>
+        <div class="stat">
+            <span class="label">Cost (USD)</span>
+            <span class="value">{{ "$%.4f"|format(token_usage.total_cost) if token_usage else "—" }}</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="action-buttons">
+        <a href="/runs/{{ env_id }}/chat" class="btn-detail">Memory</a>
+        <button
+            hx-post="/api/runs/{{ env_id }}/terminate"
+            hx-confirm="Terminate this run?"
+            class="btn-danger"
+            {{ "disabled" if not (process_status and process_status.is_live) else "" }}
+        >Terminate</button>
+    </div>
+</div>

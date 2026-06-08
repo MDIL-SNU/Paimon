@@ -1,0 +1,54 @@
+**Universal Machine Learning Interatomic Potentials (uMLIPs)**
+
+uMLIPs are pre-trained, machine-learning interatomic potentials that predict energy, forces, and stress tensors directly from atomic positions and chemical species.
+They represents high accuracy potential energy surfaces across a wide range of systems without the need for fine-tuning or system-specific training data.
+They cover broad chemical space without system-specific training data, functioning as drop-in replacements for classical force fields or expensive DFT calculations. Examples include SevenNet and MACE.
+
+If the user does not explicitly specify a force field or interatomic potential, you must always use a uMLIP.
+You may use the retrieve_umlip_knowledge tool to obtain model-specific information (e.g., supported elements, training domain, accuracy characteristics). Only uMLIPs supported by this tool are allowed.
+By default, you must first examine the SevenNet family and select the most appropriate recommended model from that family unless there is a clear reason (grounded in retrieved knowledge) to use another supported uMLIP.
+You must explicitly state which uMLIP (including model name/version, if applicable) is selected and briefly justify the choice based on its documented scope or capabilities.
+
+## What uMLIPs CAN Do
+
+- Total energy, atomic forces, and stress tensor
+- D3 dispersion for van der Waals interactions can be explicitly included where required
+- Accurately describes both short- and long-range interactions
+- (Mostly) No manual charge assignment is required — just place the atoms, and the force field will automatically capture the correct behavior based on the local environment
+
+## What uMLIPs CANNOT Do 
+Regard below things are not supported by uMLIPs, unless the official documentation of a specific model explicitly states otherwise.
+
+### Electronic Structure Properties
+- uMLIPs predict only quantities derivable from the potential energy surface. They cannot compute any property that requires explicit electronic structure.
+
+### Charged Systems
+- Most uMLIPs are trained exclusively on charge-neutral DFT calculations.
+- Exceptions include MACE-OMOL which supports charge embedding.
+
+### Spin States and Magnetic Properties
+- Most uMLIPs cannot set spin states explicitly and are restricted to the spin configurations present in their training data.
+- Exceptions include MACE-OMOL which supports spin embedding, and SevenNet-Omni which includes inference task of both `omol25_low` and `omol25_high`, representing low- and hihg-spin states.
+
+### Coarse-Grained Simulations
+- uMLIPs operate at the atomistic level only. Every atom must be explicitly represented.
+
+### Excited States
+- uMLIPs are trained on ground-state DFT data and cannot model excited electronic states.
+
+
+## Inherited DFT Functional Limitations
+- uMLIPs learn potential energy surfaces from DFT reference data. Any systematic error or bias present in the reference functional is inherited by the trained model. This is not a training fault but a fundamental limitation of the level of theory.
+- PBE-trained uMLIPs inherit PBE's systematic errors (e.g., poor description of van der Waals interactions without dispersion correction, over-estimation of lattice constants in solids)
+- r2SCAN-trained uMLIPs inherit r2SCAN's characteristics (generally better geometries and energetics for many materials)
+- When experimental validation is critical, choose a model trained on the functional most appropriate for your target property
+
+
+## Computational Guidance
+
+- GPU execution is strongly recommended. CPU execution is prohibitively slow for systems with more than ~100 atoms.
+- Model size tradeoff: Where variants exist, smaller models are faster but less accurate; larger models are slower but more accurate. Choose based on the accuracy requirements of the task.
+
+
+## Remark
+- For the list of pretrained models and detailed user guide of uMLIP models, refer to the corresponding documentation of each model.

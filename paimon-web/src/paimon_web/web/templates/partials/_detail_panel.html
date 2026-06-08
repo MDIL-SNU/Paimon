@@ -1,0 +1,21 @@
+{% if env_id %}
+<!-- Status section: polled every 3s -->
+<div id="detail-status"
+     hx-get="/runs/{{ env_id }}/detail-status-fragment"
+     hx-trigger="load, every 3s, statusRefresh from:body"
+     hx-swap="innerHTML">
+    <div class="loading">Loading status...</div>
+</div>
+
+<!-- Files section: loaded once after state transition -->
+<div id="detail-files"
+     hx-get="/runs/{{ env_id }}/detail-files-fragment"
+     hx-trigger="load"
+     hx-swap="innerHTML">
+    <div class="loading">Loading files...</div>
+</div>
+{% else %}
+<div class="detail-placeholder">
+    <p>Run details will appear here after launch.</p>
+</div>
+{% endif %}

@@ -1,0 +1,107 @@
+<mace_guide>
+MACE is a pre-trained, universal machine-learning interatomic potential (uMLIP) family, with high accuracy across a wide range of systems.
+
+<force_field_specification>
+You may receive force field specifications in this format:
+force_field:
+  model: <model_name>   # "mace-mpa-0" or "mace-omat-0"
+  size: <size>          # currently only "medium" is supported
+NOTE: dispersion correction is not supported natively in LAMMPS
+
+Currently supported models in LAMMPS:
+
+| model        | env var             |
+|--------------|---------------------|
+| mace-mpa-0   | MACE_MPA_0_MEDIUM   |
+| mace-omat-0  | MACE_OMAT_0_MEDIUM  |
+
+All environment variables listed above are pre-configured by the system and guaranteed to resolve to valid model file paths. Do not ask the user to verify.
+If the task does not specify a model, default to `mace-mpa-0` (MACE_MPA_0_MEDIUM).
+
+LAMMPS Script Generation:
+```lammps
+## Variables
+variable POT getenv <RESOLVED_ENV_VAR>
+variable ELEMENTS string "<element list from structure>"  # e.g. "Ac U"
+
+## Required preamble (before read_data)
+units         metal
+atom_style    atomic
+atom_modify   map yes
+newton        on
+
+## Force field section (after read_data)
+pair_style mliap unified ${POT} 0
+pair_coeff * * ${ELEMENTS}
+```
+
+Critical notes:
+- Element list must match atom types in structure.lammps-data (check Masses section)
+- `pair_style` and `pair_coeff` must appear AFTER `read_data` command
+- `atom_modify map yes` and `newton on` are required — do not omit them
+- The model file is a compiled `.model-mliap_lammps.pt` file
+- The `lmp` executable is pre-configured with Kokkos GPU flags — just call `lmp -in lammps.in`
+
+If the dry run fails and the error output contains a message about an unrecognized pair style or model loading failure, verify that the environment variable resolves to a valid `.pt` file path as desired.
+</force_field_specification>
+
+<element mapping and pair_style>
+Choose pair_style mliap unified for MACE. The pair_coeff command must include type mapping for each element.
+While 'convert_extxyz_data' will give you the mapping, you may need to check it in the .lammps-data file:
+
+```bash
+$ grep -A 10 Masses structure.lammps-data
+
+Masses
+     1      227.03  # Ac
+     2      238.03  # U
+ ...
+```
+
+Note: These are the default atomic masses that will be used if no specific masses are provided in the instructions.
+</element mapping and pair_style>
+
+<full input script example>
+In LAMMPS, input script commands are strict—use keywords verbatim as they are suggested in this guide.
+```lammps.in
+## Use verbatim (never change)
+units         metal
+atom_style    atomic
+atom_modify   map yes
+newton        on
+
+## Potential
+variable POT getenv MACE_MPA_0_MEDIUM
+variable ELEMENTS string "Fe"
+
+## Periodicity of the simulation box. Use 'f' for non-periodic axes.
+boundary p p p
+
+## Structure section
+read_data structure.lammps-data
+
+## Force field section
+pair_style mliap unified ${POT} 0
+pair_coeff * * ${ELEMENTS}
+
+## Simulation conditions
+timestep 0.001
+
+velocity all create 298.0 1234 dist gaussian mom yes
+
+fix 1 all npt temp 298.0 298.0 $(100.0*dt) iso 1.01325 1.01325 $(1000.0*dt)
+
+## Simulation logging
+log prod.log # must match the required output log file name, writes `log.lammps` if not explicitly set
+thermo 100
+thermo_style custom step elapsed temp press pe ke etotal vol density
+
+dump traj all dcd 500 trajectory.dcd
+
+## Run and write_restart
+run 100000
+
+write_restart final.restart
+```
+</full input script example>
+</mace_guide>

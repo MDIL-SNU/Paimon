@@ -1,0 +1,308 @@
+{
+  "rubrics": [
+    {
+      "task": "step1",
+      "rubric_items": [
+        {
+          "id": "stage_intent",
+          "description": "Based on the instruction (not LAMMPS script), is the instruction intended to perform an NPT ensemble for 1.0 ns with 2 fs timestep (500000 steps) with hydrogen having a tritium-like mass?"
+        },
+        {
+          "id": "units",
+          "description": "Does the script define `units metal` and `atom_style atomic`? Any other `units` or `atom_style` are considered as False."
+        },
+        {
+          "id": "write_restart",
+          "description": "Does the LAMMPS input script write a restart file at the end using `write_restart <restart_filename>`?"
+        },
+        {
+          "id": "D3",
+          "description": "Does the input explicitly include both `pair_style hybrid/overlay e3gnn d3 <parameter> <parameter> damp_bj pbe` and `pair_coeff * * d3 <element_list>`?"
+        },
+        {
+          "id": "element_order",
+          "description": "In `pair_coeff * *` lines, is the element order exactly: C F H Li O P ?"
+        },
+        {
+          "id": "Tritium_mass",
+          "description": "Does the script or the data file override Hydrogen mass (atom type 3) to a tritium-like value in the range [3.0, 3.03]? In LAMMPS, a typical examples are `mass 3 3.0`, `mass 3 3.016`, `mass 3 3.024`, `mass 3 3.0239999992220928`. If neither the data file nor the script modifies Hydrogen mass, set this as False."
+        },
+        {
+          "id": "velocity_init",
+          "description": "Does the script initialize velocities at 298 K using `velocity all create 298 <seed> <options>`?"
+        },
+        {
+          "id": "timestep",
+          "description": "Does the script set the timestep to 0.002: either `timestep 0.002` or through a variable where it expands at read time to 0.002?"
+        },
+        {
+          "id": "runtime",
+          "description": "Does the script include a run command for 500000 steps: either `run 500000` or through a variable where it expands at read time to 500000? Timestep/units are irrelevant."
+        },
+        {
+          "id": "npt_temp/1",
+          "description": "Does the script contain an NPT fix command that sets the temperature target to 298 K and uses the `iso` keyword? For example, `fix <id> all npt temp 298.0 298.0 <Tdamp> iso <P> <P> <Pdamp>`."
+        },
+        {
+          "id": "npt_temp/2",
+          "description": "Does the script contain an NPT fix command that sets the temperature target to 298 K and does not use the `iso` keyword, but instead uses either the `aniso` keyword or separate axis-wise pressure control with `x`, `y`, and `z`? For example, `fix <id> all npt temp 298.0 298.0 <Tdamp> aniso <P> <P> <Pdamp>` or `fix <id> all npt temp 298.0 298.0 <Tdamp> x <Px> <Px> <Pdamp> y <Py> <Py> <Pdamp> z <Pz> <Pz> <Pdamp>`."
+        },
+        {
+          "id": "npt_temp/3",
+          "description": "Does the script contain an `npt/cauchy` fix command that sets the temperature target to 298 K? Accept `iso`, or `aniso` / separate `x`, `y`, and `z` pressure control only when all controlled diagonal pressure targets are identical and any shear components (`xy`, `xz`, `yz`) are absent or explicitly set to `0 0`. Reject unequal diagonal targets or any nonzero shear stress target. For example, `fix <id> all npt/cauchy temp 298.0 298.0 <Tdamp> iso 1.01325 1.01325 <Pdamp>` and `fix <id> all npt/cauchy temp 298.0 298.0 <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp> xy 0.0 0.0 <Pdamp> xz 0.0 0.0 <Pdamp> yz 0.0 0.0 <Pdamp>` are acceptable."
+        },
+        {
+          "id": "npt_pressure/1",
+          "description": "Does the script contain an NPT fix command that uses the `iso` keyword and sets the target pressure to a value between `1.0` and `1.0133` bar inclusive? For `iso`, both pressure entries must lie in this range. For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> iso 1.01325 1.01325 <Pdamp>` or `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> iso 1.0 1.0 <Pdamp>`."
+        },
+        {
+          "id": "npt_pressure/2",
+          "description": "Does the script contain an NPT fix command that does not use the `iso` keyword, but instead uses either the `aniso` keyword or separate axis-wise pressure control with `x`, `y`, and `z`, and sets the target pressure to a value between `1.0` and `1.0133` bar inclusive on every controlled direction? For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> aniso 1.01325 1.01325 <Pdamp>` or `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp>`."
+        },
+        {
+          "id": "npt_pressure/3",
+          "description": "Does the script contain an `npt/cauchy` fix command that applies a target pressure between `1.0` and `1.0133` bar inclusive? Accept `iso`, or `aniso` / separate `x`, `y`, and `z` pressure control only when all controlled diagonal pressure targets are identical and every controlled diagonal pressure entry lies in this range, while any shear components (`xy`, `xz`, `yz`) are absent or explicitly set to `0 0`. Reject unequal diagonal targets or any nonzero shear stress target. For example, `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> iso 1.01325 1.01325 <Pdamp>` and `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp> xy 0.0 0.0 <Pdamp> xz 0.0 0.0 <Pdamp> yz 0.0 0.0 <Pdamp>` are acceptable."
+        },
+        {
+          "id": "damping/1",
+          "description": "Does the script contain an NPT fix command that uses the `iso` keyword and explicitly specifies both a thermostat damping time and a barostat damping time? Numeric values and immediate expressions such as `$(100.0*dt)` are both acceptable. For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> iso <Pstart> <Pstop> <Pdamp>`."
+        },
+        {
+          "id": "damping/2",
+          "description": "Does the script contain an NPT fix command that does not use the `iso` keyword, but instead uses either the `aniso` keyword or separate axis-wise pressure control with `x`, `y`, and `z`, and explicitly specifies both a thermostat damping time and the required pressure damping time value or values? Numeric values and immediate expressions such as `$(100.0*dt)` are both acceptable. For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> aniso <Pstart> <Pstop> <Pdamp>` or `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> x <Px1> <Px2> <Pdamp> y <Py1> <Py2> <Pdamp> z <Pz1> <Pz2> <Pdamp>`."
+        },
+        {
+          "id": "damping/3",
+          "description": "Does the script contain an `npt/cauchy` fix command that explicitly specifies both a thermostat damping time and the required pressure damping time value or values? Numeric values and immediate expressions such as `$(100.0*dt)` are both acceptable. Accept `iso`, or `aniso` / separate `x`, `y`, and `z` pressure control only when all controlled diagonal pressure targets are identical and any shear components (`xy`, `xz`, `yz`) are absent or explicitly set to `0 0`. Reject unequal diagonal targets or any nonzero shear stress target. For example, `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> iso 1.01325 1.01325 <Pdamp>` and `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp> xy 0.0 0.0 <Pdamp> xz 0.0 0.0 <Pdamp> yz 0.0 0.0 <Pdamp>` are acceptable."
+        }
+      ]
+    },
+    {
+      "task": "step2rr",
+      "rubric_items": [
+        {
+          "id": "stage_intent",
+          "description": "Based on the instruction (not LAMMPS script), is the instruction intended to perform an NPT ensemble for 0.4 ns with 1 fs timestep (400000 steps) with normal hydrogen mass? Tritium-like hydrogen mass is not allowed."
+        },
+        {
+          "id": "read_restart",
+          "description": "Does the script include `read_restart <restart_filename>`?"
+        },
+        {
+          "id": "units/1",
+          "description": "Does the script either omit both `units` and `atom_style`, or explicitly define both as `units metal` and `atom_style atomic`? If either command is explicitly written with any other value, set this item as False."
+        },
+        {
+          "id": "units/2",
+          "description": "Does the script explicitly define only one of the two commands of `units` or `atom_style`, with the command written correctly as either `units metal` or `atom_style atomic`, while the other command is omitted? If either command is explicitly written with any other value, set this item as False."
+        },
+        {
+          "id": "dump_format",
+          "description": "Does the script dump atomic trajectories in DCD format using `dump <dump_ID> all dcd 10 <dump_filename>`?"
+        },
+        {
+          "id": "reset_timestep",
+          "description": "Does the LAMMPS input script reset the timestep to 0 with `reset_timestep 0`?"
+        },
+        {
+          "id": "D3",
+          "description": "Does the input explicitly include both `pair_style hybrid/overlay e3gnn d3 <parameter> <parameter> damp_bj pbe` and `pair_coeff * * d3 <element_list>`?"
+        },
+        {
+          "id": "element_order",
+          "description": "In `pair_coeff * *` lines, is the element order exactly: C F H Li O P ?"
+        },
+        {
+          "id": "Tritium_mass",
+          "description": "Does the script set Hydrogen mass (atom type 3) to a normal hydrogen mass value in the range [1.0, 1.01]? In LAMMPS, typical examples are `mass 3 1.0`, `mass 3 1.008`, `mass 3 1.00784`, `mass 3 1.00794`."
+        },
+        {
+          "id": "timestep",
+          "description": "If `timestep` command is used, does the script set the timestep to 0.001: either `timestep 0.001` or through a variable where it expands at read time to 0.001?"
+        },
+        {
+          "id": "runtime",
+          "description": "Does the script include a run command for 400000 steps: either `run 400000` or through a variable where it expands at read time to 400000? Timestep/units are irrelevant."
+        },
+        {
+          "id": "npt_temp/1",
+          "description": "Does the script contain an NPT fix command that sets the temperature target to 298 K and uses the `iso` keyword? For example, `fix <id> all npt temp 298.0 298.0 <Tdamp> iso <P> <P> <Pdamp>`."
+        },
+        {
+          "id": "npt_temp/2",
+          "description": "Does the script contain an NPT fix command that sets the temperature target to 298 K and does not use the `iso` keyword, but instead uses either the `aniso` keyword or separate axis-wise pressure control with `x`, `y`, and `z`? For example, `fix <id> all npt temp 298.0 298.0 <Tdamp> aniso <P> <P> <Pdamp>` or `fix <id> all npt temp 298.0 298.0 <Tdamp> x <Px> <Px> <Pdamp> y <Py> <Py> <Pdamp> z <Pz> <Pz> <Pdamp>`."
+        },
+        {
+          "id": "npt_temp/3",
+          "description": "Does the script contain an `npt/cauchy` fix command that sets the temperature target to 298 K? Accept `iso`, or `aniso` / separate `x`, `y`, and `z` pressure control only when all controlled diagonal pressure targets are identical and any shear components (`xy`, `xz`, `yz`) are absent or explicitly set to `0 0`. Reject unequal diagonal targets or any nonzero shear stress target. For example, `fix <id> all npt/cauchy temp 298.0 298.0 <Tdamp> iso 1.01325 1.01325 <Pdamp>` and `fix <id> all npt/cauchy temp 298.0 298.0 <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp> xy 0.0 0.0 <Pdamp> xz 0.0 0.0 <Pdamp> yz 0.0 0.0 <Pdamp>` are acceptable."
+        },
+        {
+          "id": "npt_pressure/1",
+          "description": "Does the script contain an NPT fix command that uses the `iso` keyword and sets the target pressure to a value between `1.0` and `1.0133` bar inclusive? For `iso`, both pressure entries must lie in this range. For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> iso 1.01325 1.01325 <Pdamp>` or `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> iso 1.0 1.0 <Pdamp>`."
+        },
+        {
+          "id": "npt_pressure/2",
+          "description": "Does the script contain an NPT fix command that does not use the `iso` keyword, but instead uses either the `aniso` keyword or separate axis-wise pressure control with `x`, `y`, and `z`, and sets the target pressure to a value between `1.0` and `1.0133` bar inclusive on every controlled direction? For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> aniso 1.01325 1.01325 <Pdamp>` or `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp>`."
+        },
+        {
+          "id": "npt_pressure/3",
+          "description": "Does the script contain an `npt/cauchy` fix command that applies a target pressure between `1.0` and `1.0133` bar inclusive? Accept `iso`, or `aniso` / separate `x`, `y`, and `z` pressure control only when all controlled diagonal pressure targets are identical and every controlled diagonal pressure entry lies in this range, while any shear components (`xy`, `xz`, `yz`) are absent or explicitly set to `0 0`. Reject unequal diagonal targets or any nonzero shear stress target. For example, `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> iso 1.01325 1.01325 <Pdamp>` and `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp> xy 0.0 0.0 <Pdamp> xz 0.0 0.0 <Pdamp> yz 0.0 0.0 <Pdamp>` are acceptable."
+        },
+        {
+          "id": "damping/1",
+          "description": "Does the script contain an NPT fix command that uses the `iso` keyword and explicitly specifies both a thermostat damping time and a barostat damping time? Numeric values and immediate expressions such as `$(100.0*dt)` are both acceptable. For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> iso <Pstart> <Pstop> <Pdamp>`."
+        },
+        {
+          "id": "damping/2",
+          "description": "Does the script contain an NPT fix command that does not use the `iso` keyword, but instead uses either the `aniso` keyword or separate axis-wise pressure control with `x`, `y`, and `z`, and explicitly specifies both a thermostat damping time and the required pressure damping time value or values? Numeric values and immediate expressions such as `$(100.0*dt)` are both acceptable. For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> aniso <Pstart> <Pstop> <Pdamp>` or `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> x <Px1> <Px2> <Pdamp> y <Py1> <Py2> <Pdamp> z <Pz1> <Pz2> <Pdamp>`."
+        },
+        {
+          "id": "damping/3",
+          "description": "Does the script contain an `npt/cauchy` fix command that explicitly specifies both a thermostat damping time and the required pressure damping time value or values? Numeric values and immediate expressions such as `$(100.0*dt)` are both acceptable. Accept `iso`, or `aniso` / separate `x`, `y`, and `z` pressure control only when all controlled diagonal pressure targets are identical and any shear components (`xy`, `xz`, `yz`) are absent or explicitly set to `0 0`. Reject unequal diagonal targets or any nonzero shear stress target. For example, `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> iso 1.01325 1.01325 <Pdamp>` and `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp> xy 0.0 0.0 <Pdamp> xz 0.0 0.0 <Pdamp> yz 0.0 0.0 <Pdamp>` are acceptable."
+        }
+      ]
+    },
+    {
+      "task": "step2rd",
+      "rubric_items": [
+        {
+          "id": "stage_intent",
+          "description": "Based on the instruction (not LAMMPS script), is the instruction intended to perform an NPT ensemble for 0.4 ns with 1 fs timestep (400000 steps) with normal hydrogen mass? Tritium-like hydrogen mass is not allowed."
+        },
+        {
+          "id": "read_data",
+          "description": "Does the script include `read_data <data_filename>`?"
+        },
+        {
+          "id": "units",
+          "description": "Does the script define `units metal` and `atom_style atomic`? Any other `units` or `atom_style` are considered as False."
+        },
+        {
+          "id": "dump_format",
+          "description": "Does the script dump atomic trajectories in DCD format using `dump <dump_ID> all dcd 10 <dump_filename>`?"
+        },
+        {
+          "id": "D3",
+          "description": "Does the input explicitly include both `pair_style hybrid/overlay e3gnn d3 <parameter> <parameter> damp_bj pbe` and `pair_coeff * * d3 <element_list>`?"
+        },
+        {
+          "id": "element_order",
+          "description": "In `pair_coeff * *` lines, is the element order exactly: C F H Li O P ?"
+        },
+        {
+          "id": "Tritium_mass",
+          "description": "Does the script set Hydrogen mass (atom type 3) to a normal hydrogen mass value in the range [1.0, 1.01]? In LAMMPS, typical examples are `mass 3 1.0`, `mass 3 1.008`, `mass 3 1.00784`, `mass 3 1.00794`. If the mass is already set to a value in this range in the loaded data file, set this as True."
+        },
+        {
+          "id": "velocity_init",
+          "description": "Does the script initialize velocities at 298 K using `velocity all create 298 <seed> <options>`?"
+        },
+        {
+          "id": "timestep",
+          "description": "If `timestep` command is used, does the script set the timestep to 0.001: either `timestep 0.001` or through a variable where it expands at read time to 0.001?"
+        },
+        {
+          "id": "runtime",
+          "description": "Does the script include a run command for 400000 steps: either `run 400000` or through a variable where it expands at read time to 400000? Timestep/units are irrelevant."
+        },
+        {
+          "id": "npt_temp/1",
+          "description": "Does the script contain an NPT fix command that sets the temperature target to 298 K and uses the `iso` keyword? For example, `fix <id> all npt temp 298.0 298.0 <Tdamp> iso <P> <P> <Pdamp>`."
+        },
+        {
+          "id": "npt_temp/2",
+          "description": "Does the script contain an NPT fix command that sets the temperature target to 298 K and does not use the `iso` keyword, but instead uses either the `aniso` keyword or separate axis-wise pressure control with `x`, `y`, and `z`? For example, `fix <id> all npt temp 298.0 298.0 <Tdamp> aniso <P> <P> <Pdamp>` or `fix <id> all npt temp 298.0 298.0 <Tdamp> x <Px> <Px> <Pdamp> y <Py> <Py> <Pdamp> z <Pz> <Pz> <Pdamp>`."
+        },
+        {
+          "id": "npt_temp/3",
+          "description": "Does the script contain an `npt/cauchy` fix command that sets the temperature target to 298 K? Accept `iso`, or `aniso` / separate `x`, `y`, and `z` pressure control only when all controlled diagonal pressure targets are identical and any shear components (`xy`, `xz`, `yz`) are absent or explicitly set to `0 0`. Reject unequal diagonal targets or any nonzero shear stress target. For example, `fix <id> all npt/cauchy temp 298.0 298.0 <Tdamp> iso 1.01325 1.01325 <Pdamp>` and `fix <id> all npt/cauchy temp 298.0 298.0 <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp> xy 0.0 0.0 <Pdamp> xz 0.0 0.0 <Pdamp> yz 0.0 0.0 <Pdamp>` are acceptable."
+        },
+        {
+          "id": "npt_pressure/1",
+          "description": "Does the script contain an NPT fix command that uses the `iso` keyword and sets the target pressure to a value between `1.0` and `1.0133` bar inclusive? For `iso`, both pressure entries must lie in this range. For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> iso 1.01325 1.01325 <Pdamp>` or `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> iso 1.0 1.0 <Pdamp>`."
+        },
+        {
+          "id": "npt_pressure/2",
+          "description": "Does the script contain an NPT fix command that does not use the `iso` keyword, but instead uses either the `aniso` keyword or separate axis-wise pressure control with `x`, `y`, and `z`, and sets the target pressure to a value between `1.0` and `1.0133` bar inclusive on every controlled direction? For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> aniso 1.01325 1.01325 <Pdamp>` or `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp>`."
+        },
+        {
+          "id": "npt_pressure/3",
+          "description": "Does the script contain an `npt/cauchy` fix command that applies a target pressure between `1.0` and `1.0133` bar inclusive? Accept `iso`, or `aniso` / separate `x`, `y`, and `z` pressure control only when all controlled diagonal pressure targets are identical and every controlled diagonal pressure entry lies in this range, while any shear components (`xy`, `xz`, `yz`) are absent or explicitly set to `0 0`. Reject unequal diagonal targets or any nonzero shear stress target. For example, `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> iso 1.01325 1.01325 <Pdamp>` and `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp> xy 0.0 0.0 <Pdamp> xz 0.0 0.0 <Pdamp> yz 0.0 0.0 <Pdamp>` are acceptable."
+        },
+        {
+          "id": "damping/1",
+          "description": "Does the script contain an NPT fix command that uses the `iso` keyword and explicitly specifies both a thermostat damping time and a barostat damping time? Numeric values and immediate expressions such as `$(100.0*dt)` are both acceptable. For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> iso <Pstart> <Pstop> <Pdamp>`."
+        },
+        {
+          "id": "damping/2",
+          "description": "Does the script contain an NPT fix command that does not use the `iso` keyword, but instead uses either the `aniso` keyword or separate axis-wise pressure control with `x`, `y`, and `z`, and explicitly specifies both a thermostat damping time and the required pressure damping time value or values? Numeric values and immediate expressions such as `$(100.0*dt)` are both acceptable. For example, `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> aniso <Pstart> <Pstop> <Pdamp>` or `fix <id> all npt temp <Tstart> <Tstop> <Tdamp> x <Px1> <Px2> <Pdamp> y <Py1> <Py2> <Pdamp> z <Pz1> <Pz2> <Pdamp>`."
+        },
+        {
+          "id": "damping/3",
+          "description": "Does the script contain an `npt/cauchy` fix command that explicitly specifies both a thermostat damping time and the required pressure damping time value or values? Numeric values and immediate expressions such as `$(100.0*dt)` are both acceptable. Accept `iso`, or `aniso` / separate `x`, `y`, and `z` pressure control only when all controlled diagonal pressure targets are identical and any shear components (`xy`, `xz`, `yz`) are absent or explicitly set to `0 0`. Reject unequal diagonal targets or any nonzero shear stress target. For example, `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> iso 1.01325 1.01325 <Pdamp>` and `fix <id> all npt/cauchy temp <Tstart> <Tstop> <Tdamp> x 1.0 1.0 <Pdamp> y 1.0 1.0 <Pdamp> z 1.0 1.0 <Pdamp> xy 0.0 0.0 <Pdamp> xz 0.0 0.0 <Pdamp> yz 0.0 0.0 <Pdamp>` are acceptable."
+        }
+      ]
+    },
+    {
+      "task": "step3",
+      "rubric_items": [
+        {
+          "id": "stage_intent",
+          "description": "Based on the instruction (not LAMMPS script), is the instruction intended to perform an NVT run for 1.1 ns with center of mass drift addressed? (1100000 steps)"
+        },
+        {
+          "id": "units",
+          "description": "Does the script define `units metal` and `atom_style atomic`? Any other `units` or `atom_style` are considered as False."
+        },
+        {
+          "id": "dump_format",
+          "description": "Does the script dump atomic trajectories in DCD format using `dump <dump_ID> all dcd 100 <dump_filename>`?"
+        },
+        {
+          "id": "unwrap_yes",
+          "description": "Does the script explicitly unwrap coordinates with `dump_modify <dump_ID> unwrap yes`?"
+        },
+        {
+          "id": "write_restart",
+          "description": "Does the LAMMPS input script write a restart file at the end using `write_restart <restart_filename>`?"
+        },
+        {
+          "id": "D3",
+          "description": "Does the input explicitly include both `pair_style hybrid/overlay e3gnn d3 <parameter> <parameter> damp_bj pbe` and `pair_coeff * * d3 <element_list>`?"
+        },
+        {
+          "id": "element_order",
+          "description": "In `pair_coeff * *` lines, is the element order exactly: C F H Li O P ?"
+        },
+        {
+          "id": "velocity_init",
+          "description": "Does the script initialize velocities at 298 K using `velocity all create 298 <seed> <options>`?"
+        },
+        {
+          "id": "remove_com",
+          "description": "Does the script apply a fix to remove center-of-mass drift using `fix <id> all momentum <frequency> linear 1 1 1`? The frequency should be lower than 1000."
+        },
+        {
+          "id": "timestep",
+          "description": "If `timestep` command is used, does the script set the timestep to 0.001: either `timestep 0.001` or through a variable where it expands at read time to 0.001?"
+        },
+        {
+          "id": "runtime",
+          "description": "Does the script include a run command for 1100000 steps: either `run 1100000` or through a variable where it expands at read time to 1100000? Timestep/units are irrelevant."
+        },
+        {
+          "id": "nvt_temp",
+          "description": "Is the simulation temperature set to 298 K `fix <id> all nvt temp 298 298 <thermostat_damping_constant>`?"
+        },
+        {
+          "id": "damping",
+          "description": "Are thermostat damping times explicitly set in the `fix <id> all nvt temp <temperature> <temperature> <thermostat_damping_constant>` command? Numeric values (0.01) and immediate expressions such as `$(100.0*dt)` are both fine."
+        },
+        {
+          "id": "ensemble_NVT",
+          "description": "Is the chosen ensemble NVT using `fix <id> all nvt temp <temperature> <temperature> <thermostat_damping_constant>`? If the fix command includes any pressure keywords or barostat damping terms, set this as False."
+        }
+      ]
+    }
+  ]
+}

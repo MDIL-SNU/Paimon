@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Paimon - {{ env_id if env_id else "New Run" }}{% endblock %}
+
+{% block content %}
+<script src="/static/js/chat.js"></script>
+<script src="/static/js/file-tree.js"></script>
+<script src="/static/js/detail-panel.js"></script>
+
+<div class="unified-container">
+    <!-- Left Panel: Chat Interface -->
+    <div class="chat-panel">
+        <div class="chat-messages" id="chat-messages">
+            {% include "partials/_chat_messages.html" %}
+        </div>
+
+        <div class="chat-input-area">
+            {% if not env_id %}
+            {% include "partials/_launch_form.html" %}
+            {% else %}
+            {% include "partials/_chat_form.html" %}
+            <script>
+            initChat("{{ env_id }}");
+            {% if chat_events %}
+            renderChatFromEvents({{ chat_events | tojson }}, document.getElementById('chat-messages'));
+            {% endif %}
+            startChatPolling("{{ env_id }}");
+            window.addEventListener('pageshow', function(e) {
+                if (e.persisted) location.reload();
+            });
+            </script>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Panel: Run Detail -->
+    <div class="detail-panel" id="detail-panel">
+        {% include "partials/_detail_panel.html" %}
+        {% if env_id %}
+        <script>initDetailPanel("{{ env_id }}");</script>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.htmx-indicator { display: none; }
+.htmx-request .htmx-indicator { display: inline; }
+.htmx-request .normal-text { display: none; }
+</style>
+
+{% endblock %}

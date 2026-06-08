@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Paimon - {{ title }}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb">
+    <a href="/">Runs</a> /
+    <a href="/runs/{{ env_id }}/workspace">{{ env_id[:8] }}</a> /
+    {% if dir_name %}
+    <a href="/runs/{{ env_id }}/subtasks/{{ dir_name }}">{{ subtask_name }}</a> /
+    {% endif %}
+    Chat
+</nav>
+
+<h2>{{ title }}</h2>
+
+{% if trajectory %}
+<section class="trajectory-section">
+    <h3>Tool Trajectory ({{ trajectory|length }} calls)</h3>
+    <div class="trajectory">
+        {% for t in trajectory %}
+        <div class="trajectory-item">
+            <span class="trajectory-step">{{ t.step }}</span>
+            <span class="trajectory-tool">{{ t.tool_name }}</span>
+            {% if t.summary %}
+            <span class="trajectory-summary">{{ t.summary }}</span>
+            {% endif %}
+        </div>
+        {% if not loop.last %}
+        <span class="trajectory-arrow">-></span>
+        {% endif %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if messages %}
+<div class="chat-messages">
+    {% for msg in messages %}
+    <div class="chat-message chat-{{ msg.role.value }}">
+        <div class="chat-header">
+            <span class="chat-role">{{ msg.role.value }}</span>
+        </div>
+        <div class="chat-content">
+            {% for block in msg.blocks %}
+                {% if block.block_type == "text" %}
+                    <div class="block text-block">
+                        <pre>{{ block.text }}</pre>
+                    </div>
+                {% elif block.block_type == "thinking" %}
+                    <div class="block thinking-block">
+                        <div class="block-label">Thinking{% if block.num_tokens %} ({{ block.num_tokens }} tokens){% endif %}</div>
+                        {% if block.content %}
+                        <pre>{{ block.content }}</pre>
+                        {% else %}
+                        <em>Thinking process (content not available)</em>
+                        {% endif %}
+                    </div>
+                {% elif block.block_type == "tool_call" %}
+                    <div class="block tool-call-block">
+                        <div class="block-label">Tool: {{ block.tool_name }}</div>
+                        <pre>{{ block.tool_kwargs }}</pre>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="empty">No chat history available.</p>
+{% endif %}
+{% endblock %}

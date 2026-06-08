@@ -1,0 +1,116 @@
+#!/bin/bash
+
+if [ -p /dev/stdin ] || [ ! -t 0 ]; then
+        INPUT=$(cat)
+    elif [ -f ".agent_memory.json" ]; then
+        INPUT=$(cat .agent_memory.json)
+    elif [ -f ".chat.json" ]; then
+        INPUT=$(cat .chat.json)
+    else
+        echo "Error: no input provided and no fallback file found" >&2
+        exit 1
+fi
+
+# Store the jq program in a temp file
+JQ_SCRIPT=$(mktemp)
+cat > "$JQ_SCRIPT" <<'EOF'
+def green: "\u001b[32m"; def blue: "\u001b[34m"; def yellow: "\u001b[33m"; def cyan: "\u001b[36m"; def magenta: "\u001b[35m"; def reset: "\u001b[0m";
+def normalize_json:
+  if type=="string" then fromjson else . end;
+def role_color:
+  if .role=="user" then green
+  elif .role=="system" then cyan
+  elif .role=="assistant" then blue
+  elif .role=="tool" then yellow
+  elif .role=="reasoning" then magenta
+  else reset end;
+
+.chat_store.store.chat_history[]
+| role_color + "--- \(.role) ---" + reset
+,
+  (
+    .blocks[]?
+    | if .block_type=="text"
+      then .text
+      elif .block_type=="thinking"
+      then magenta + .content + reset
+      elif .block_type=="tool_call"
+      then cyan + "Tool call\n Tool name: " + reset + .tool_name + cyan + "\n Arguments:" + reset
+          ,
+            (
+              .tool_kwargs
+                | normalize_json
+                | to_entries
+                | map(
+                    cyan + "  \(.key): " + reset +
+                    ( if (.value|type) == "string"
+                      then .value
+                      else (.value|tojson)
+                      end )
+                   )
+                | join("\n")
+            )
+      else "\(.block_type):\n\(.text)"
+      end
+  )
+EOF
+
+#echo "$INPUT" | jq -r -f "$JQ_SCRIPT"
+
+# First try with jq (silently fail)
+OUTPUT=$(echo "$INPUT" | jq -r -f "$JQ_SCRIPT" 2>/dev/null)
+
+# If jq failed, try preprocessing
+if [ $? -ne 0 ]; then
+    INPUT=$(echo "$INPUT" | python3 -c '
+import sys
+import json
+
+mem = json.load(sys.stdin)
+
+chat_hist = mem["chat_store"]["store"]["chat_history"]
+
+patched = []
+for chat in chat_hist:
+    role = chat["role"]
+    if role != "assistant":
+        patched.append(chat)
+        continue
+    ak = chat["additional_kwargs"]
+    if "tool_calls" not in ak:
+        pass
+    else:
+        tool_calls = ak["tool_calls"]
+        assert len(tool_calls) == 1, "More than one function call"
+        tool_call = tool_calls[0]
+
+        new = {"function": {"name": tool_call["name"], "arguments": tool_call["arguments"]}}
+        chat["additional_kwargs"]["tool_calls"][0] = new
+
+    if "reasoning" in chat["additional_kwargs"]:
+        summary = chat["additional_kwargs"]["reasoning"]["summary"]
+        blocks = []
+        for summ in summary:
+            blocks.append({
+                "role": "reasoning",
+                "blocks": [
+                    {
+                        "block_type": "text",
+                        "text": summ["text"]
+                    }]
+                })
+        patched.extend(blocks)
+    patched.append(chat)
+
+mem["chat_store"]["store"]["chat_history"] = patched
+json.dump(mem, sys.stdout)
+')
+
+    OUTPUT=$(echo "$INPUT" | jq -r -f "$JQ_SCRIPT")
+fi
+
+# Print final output
+echo "$OUTPUT"
+
+# Clean up
+rm "$JQ_SCRIPT"

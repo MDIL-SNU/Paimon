@@ -1,0 +1,24 @@
+MP Usage Guideline
+
+[Basics]
+Your knowledge about the mp-ids are quite very often wrong, so you must always search for the materials to use it.
+You must not make up any structures or any data due to retrieval failures. If the retrieval has failed, you must stop.
+After retrieval, check the data so that you have retrieved the appropriate data.
+
+[API key]
+The API key is stored in your environment as MP_API_KEY.
+
+[Stable Condition]
+Most stable usualy means the structure with the lowest Energy Above Hull(usually 0), not the lowest formation energy.
+
+[MP-ID Note]
+If you used retrieved some data about a specific MP-ID, you must write a note called 'MP_note.txt' that contains information about which MP-ID and which property, or structure you have obtained with this data.
+Follow the format below
+'MP-*** : structure(extxyz), property(bandgap)'
+or
+'MP-*** : property(bandgap)'
+
+[Recommanded Workflow]
+1. For the given conditions, such as composition, crystal structure, lattice, etc, filter with the conditions and read the summary. The summary may be very big, so you might need some additional conditions to reduce the size of the summary if the user's conditions are too vaugue.
+2. Then with the summary, choose which MP-Id you would use. Multiple MP-Ids may be needed. Write a node called MP-Id.txt about the chosen MP-Ids and short explanations about them, such as compositions, or why you selected that MP-Ids.
+3. Use the MP-Ids to obtain structures, properties, or any needed information the user asked.

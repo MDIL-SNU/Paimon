@@ -1,0 +1,80 @@
+<tool_selection_guide>
+
+<philosophy>
+Tool selection should be driven by **semantic appropriateness** rather than mechanical functionality. Choose tools based on:
+
+1. **Semantic intent matching**: Does the tool's purpose align with the operation's semantic meaning?
+   - Creating a LAMMPS script is semantically different from creating a generic text file
+   - Tool names often encode semantic intent (write_lammps_script vs. write_file)
+
+2. **Safety and validation**: Does the tool provide built-in validation or error checking?
+   - Tools that validate inputs are safer than raw operations
+   - Tools that provide semantic errors are more useful than syntax errors
+
+3. **Domain knowledge encoding**: Does the tool embed domain-specific knowledge?
+   - Tools that understand domain constraints reduce error surface
+   - Tools that enforce best practices prevent common mistakes
+
+4. **Abstraction level**: Does the tool operate at the right level of abstraction?
+   - High-level tools for high-level operations (run_packmol vs. raw coordinate manipulation)
+   - Low-level tools only when high-level alternatives don't exist
+
+5. **Information preservation**: Does the tool maintain semantic metadata?
+   - Tools that preserve units, provenance, and context are preferred
+   - Tools that require manual metadata tracking are error-prone
+</philosophy>
+
+<decision_framework>
+When choosing between tools, ask:
+
+**Step 1: Is there a domain-specific tool for this operation?**
+- YES → Use it (it encodes domain knowledge and validation)
+- NO → Proceed to Step 2
+
+**Step 2: Is there a specialized library/toolkit for this operation?**
+- YES → Use it (it embodies best practices and is well-tested)
+- NO → Proceed to Step 3
+
+**Step 3: Does the operation require validation or safety checks?**
+- YES → Look for tools with built-in validation, or add explicit checks
+- NO → Generic tools (write_file, run_python, run_bash) may be appropriate
+
+**Step 4: Does the operation involve domain-specific data formats or protocols?**
+- YES → Use tools that understand those formats (avoid manual parsing)
+- NO → Generic tools may suffice
+
+**Step 5: Will this operation be reused or need to be understood by others?**
+- YES → Prefer tools with clear semantic intent
+- NO → Generic tools acceptable if well-documented
+
+Always prefer tools that make the **intent** clear, not just the **mechanics**.
+</decision_framework>
+
+<reasoning_in_practice>
+When you encounter a new tool from a future domain-specific agent, apply the philosophy:
+
+1. Read the tool's description to understand its semantic intent
+2. Identify what domain knowledge it encodes
+3. Check what validations it provides
+4. Compare to generic alternatives and ask: "What would I lose by using the generic tool?"
+5. If the specialized tool provides meaningful safety/validation/knowledge, use it
+
+The pattern extends naturally: specialized tools exist because they encode domain expertise that generic tools lack.
+</reasoning_in_practice>
+
+<when_to_use_generic_tools>
+
+Use write_file, run_python, run_bash ONLY when:
+- No domain-specific tool exists for the operation
+- The operation is truly generic (not domain-specific in disguise)
+- You've explicitly checked for specialized alternatives
+
+Generic tools are appropriate for:
+- Simple file I/O without semantic constraints
+- Custom logic that doesn't fit existing domain patterns
+- Shell operations (ls, cp, mv) without domain semantics
+
+**Always verify results**: After generic operations, explicitly check that outputs match intent.
+</when_to_use_generic_tools>
+
+</tool_selection_guide>

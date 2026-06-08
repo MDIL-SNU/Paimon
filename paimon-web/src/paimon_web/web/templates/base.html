@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Paimon{% endblock %}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="header-main">
+                <h1><a href="/">Paimon</a></h1>
+                <div class="status-indicator"></div>
+                <p class="header-subtitle">Multi-agent orchestration framework</p>
+            </div>
+        </div>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        <div class="footer-grid">
+            <span>Paimon v1.0</span>
+            <span class="footer-separator">|</span>
+            <span>Atomistic simulation workflow</span>
+        </div>
+    </footer>
+</body>
+</html>

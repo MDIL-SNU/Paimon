@@ -1,0 +1,15 @@
+Find stable conformers of a given molecule is an extremely tricky problem.
+First, using open babel is better than rdkit in aspect of speed.
+You should
+1) create very large amount of conformers by searching algorithm,
+2) remove duplicates (in terms of rmsd),
+3) and get physically meaningful final conformers by minimization.
+Also, aggressive search to escape global or local minima is indispensive.
+For this, you should iteratively search new conformers from previously generated conformers.
+Also you should check the final conformers have truely different geometries.
+Here, you should consider
+  - permutation of equivalent atoms
+  - ignoring hydrogen (they are too soft)
+  - large rmsd among conformers
+  - existence of dihedral angle that largely differs among conformers
+If you fail, you should go back to the initial step, reflecting any missing logic in your code.

@@ -1,0 +1,55 @@
+Pro tips for atomistic simulations
+
+1. System Setup and Preparation
+
+    Does the system need structural relaxation before property calculations?
+
+    Is the simulation cell large enough to avoid artificial interactions?
+    (Especially critical for surfaces, defects, and charged systems.)
+
+    When simulating slabs or molecules, is there sufficient vacuum spacing if PBC is forced (like VASP)? or PBC itself is off? (possible for MLIP)
+    (Typically ≥15 Å for slabs or isolated molecules.)
+
+    Are the boundary conditions appropriate for the system being modeled?
+    (3D periodic for bulk, 2D periodic + vacuum for surfaces, non-periodic for clusters or a molecule.)
+
+    Any atom pairs that too close each other?
+    (Atoms could fly away right after the simulation begins.)
+
+    Is the additional dispersion correction required?
+    (It might be crucial for systems including organic system or surface.)
+
+2. Numerical Convergence and Accuracy
+
+    Have I tested convergence with respect to key parameters?
+    (E.g., supercell size, vacuum spacing, k-point sampling, cutoff energy, time step, etc.)
+
+    Are the calculated properties insensitive to simulation settings?
+    (Convergence of energy does not guarantee convergence of forces or derived quantities.)
+
+    Do I need to sample multiple configurations or initial conditions?
+    (Especially important in finite-temperature MD or disordered systems.)
+
+3. Simulation Planning and Execution
+
+    What is the physical question I’m trying to answer — and is the method suitable for it?
+    (E.g., static calculations for structural stability vs. MD for transport properties.)
+
+    Do I need finite-temperature sampling, or is a single-point calculation enough?
+    (Temperature effects are crucial for entropy-dominated phenomena.)
+
+    Is the simulation long enough (or ensemble diverse enough) to reach meaningful averages?
+    (Thermodynamic properties require statistical convergence.)
+
+4. Units
+    
+    Are all input and output quantities expressed in consistent and physically meaningful units?
+    (Defaults to, length [Å or Bohr], energy [eV or Ha], time [fs], force [eV/Å], stress [GPa or eV/Å³], and temperature [K].)
+
+    Are any conversions needed between codes or data formats?
+    (Some packages use atomic units internally — be cautious when transferring data between codes.)
+
+    Is the choice of units appropriate for interpreting the results physically?
+    (E.g., express diffusion in Å²/ps for MD output, but convert to cm²/s for experimental comparison.)
+
+    When outputting a file associated with physical values, is the unit explicitly specified?

@@ -1,0 +1,127 @@
+<sevennet_guide>
+SevenNet is a pre-trained, universal machine-learning interatomic potential (uMLIP) family with high accuracy across a wide range of systems.
+
+<force_field_specification>
+You may receives force field specifications in this format:
+force_field:
+  model: <model_name>      # e.g., "7net-0", "7net-mf-ompa"
+  modality: <modality>     # optional, required for multi-fidelity models
+  dispersion: <bool>       # optional, defaults to false
+
+Environment Variable Resolution:
+
+Map an user instruction to environment variables using this principle:
+1. Normalize model name: remove '7net-' prefix, hyphens, convert to uppercase
+2. If modality present: `SEVENNET_{MODEL}_{MODALITY}`
+3. If no modality: `SEVENNET_{MODEL}`
+4. Modality Constraints 
+
+The following models require a modality and must always explicitly specify one:
+7net-mf-ompa, 7net-omni
+
+Any instruction using these models without a modality is invalid.
+All other models do not support modalities and specifying a modality for these models is invalid.
+
+Examples:
+- `model: 7net-0` -> `$SEVENNET_0`
+- `model: 7net-l3i5` -> `$SEVENNET_L3I5`
+- `model: 7net-mf-ompa, modality: omat24` -> `$SEVENNET_MFOMPA_OMAT24`
+- `model: 7net-omni, modality: mpa` -> `$SEVENNET_OMNI_MPA`
+
+All environment variables listed above are pre-configured by the system and guaranteed to resolve to valid model file paths.
+
+LAMMPS Script Generation:
+```lammps
+## Variables
+variable POT getenv <RESOLVED_ENV_VAR>
+variable ELEMENTS string "<element list from structure>"  # e.g. "Ac U"
+
+## Force field section (after read_data)
+# Without D3 dispersion (default):
+pair_style e3gnn
+pair_coeff * * ${POT} ${ELEMENTS}
+
+# With D3 dispersion (if explicitly requested):
+pair_style hybrid/overlay e3gnn d3 9000 1600 damp_bj pbe
+pair_coeff * * e3gnn ${POT} ${ELEMENTS}
+pair_coeff * * d3 ${ELEMENTS}
+```
+
+Critical notes:
+- Element list must match atom types in structure.lammps-data (check Masses section)
+- `pair_style` and `pair_coeff` must appear AFTER `read_data` command
+- D3 cutoff values (9000, 1600) are in Bohr^2 units, use as-is unless specified
+- `e3gnn` and `d3` are SevenNet-specific pair styles (not in LAMMPS docs). Use the syntax exactly as shown above.
+
+
+If the dry run fails and the error output contains the following message
+
+ERROR: error loading the model, check the path of the model (src/pair_e3gnn.cpp:320)
+
+this indicates that the script was executed with an invalid environment variable for "POT".
+Review the relevant environment variable mappings and verify that the correct model path is being used.
+</force_field_specification>
+
+<element mapping and pair_style>
+Choose pair_style e3gnn for SevenNet. The pair_coeff command must include type mapping for each element.
+While 'convert_extxyz_data' will give you the mapping, you may need to check it in the .lammps-data file. In this case, you can use grep.
+
+```bash
+$ grep -A 10 Masses structure.lammps-data
+
+Masses
+     1      227.03  # Ac
+     2      238.03  # U
+ ...
+```
+
+Note: These are the default atomic masses that will be used if no specific masses are provided in the instructions.
+</element mapping and pair_style>
+
+<full input script example>
+In LAMMPS, input script commands are strict—use keywords verbatim as they are suggested in this guide.
+```lammps.in
+## Use verbatim (never change)
+units metal
+atom_style atomic
+
+## Potential
+variable POT getenv SEVENNET_0
+variable ELEMENTS string "Ac U"
+
+## Periodicity of the simulation box. Use 'f' for non-periodic axes.
+boundary p p p
+
+## Structure or restart section
+read_data structure.lammps-data
+
+## Force field section example 1 (without D3)
+pair_style e3gnn
+pair_coeff * * ${POT} ${ELEMENTS}
+
+## Force field section example 2 (without D3)
+pair_style hybrid/overlay e3gnn d3 9000 1600 damp_bj pbe
+pair_coeff * * e3gnn ${POT} ${ELEMENTS}
+pair_coeff * * d3 ${ELEMENTS}
+
+## Simulation conditions
+timestep 0.001
+
+velocity all create 298.0 1234 dist gaussian mom yes
+
+fix 1 all npt temp 298.0 298.0 $(100.0*dt) iso 1.01325 1.01325 $(1000.0*dt)
+
+## Simulation logging
+log prod.log # must match the required output log file name, writes `log.lammps` if not explicitly set
+thermo 100
+thermo_style custom step elapsed temp press pe ke etotal vol density
+
+dump traj all dcd 500 trajectory.dcd
+
+## Run and write_restart
+run 100000
+
+write_restart final.restart
+```
+</full input script example>
+</sevennet_guide>

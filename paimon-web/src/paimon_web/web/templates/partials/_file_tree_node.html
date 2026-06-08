@@ -1,0 +1,33 @@
+{% if node.type == 'file' %}
+<div class="file-tree-item file-item" data-path="{{ node.path }}">
+    <div class="file-tree-content">
+        <span class="file-icon file-icon-document"></span>
+        <code>{{ node.name }}</code>
+        <div class="file-actions">
+            <button class="btn-small" onclick="viewFileInline('{{ node.path | replace("'", "\\'") }}', this)">View</button>
+            {% if node.name.endswith(('.extxyz', '.xyz', '.cif', '.poscar')) %}
+            <button class="btn-small" onclick="viewStructureInline('{{ node.path | replace("'", "\\'") }}', this)">Structure</button>
+            {% endif %}
+            <button class="btn-small" onclick="downloadFile('{{ node.path | replace("'", "\\'") }}')">Download</button>
+        </div>
+    </div>
+</div>
+
+{% elif node.type == 'directory' %}
+<div class="file-tree-item directory-item">
+    <div class="file-tree-content">
+        <button class="dir-toggle" onclick="toggleDirectory(this)">
+            <span class="collapsed">▶</span>
+            <span class="expanded" style="display:none">▼</span>
+        </button>
+        <span class="folder-icon">{{ node.name }}/</span>
+    </div>
+    <div class="file-tree-children" style="display:none">
+        {% for child in node.children %}
+            {% with node=child %}
+                {% include 'partials/_file_tree_node.html' %}
+            {% endwith %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

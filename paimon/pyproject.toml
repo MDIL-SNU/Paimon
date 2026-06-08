@@ -1,0 +1,73 @@
+[project]
+name = "paimon"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "tqdm",
+    "pyyaml",
+    "ase>=3.24.0",
+    "pymatgen>=2025.10.7",
+    #"sevenn>=0.10.3",
+    "fabric",
+    "termcolor",
+    "llama-index-core==0.14.21",
+    "llama-index-llms-openai==0.7.5",
+    "llama-index-llms-anthropic>=0.10.10",
+    "llama-index-llms-google-genai>=0.7.4",
+    "llama-index==0.14.21",
+    "llama-index-utils-workflow>=0.5.0",
+    "llama-index-embeddings-openai>=0.2.0",
+    "llama-index-vector-stores-chroma>=0.2.0",
+    "llama-index-retrievers-bm25>=0.3.0",
+
+    #"llama-index-core==0.14.8",
+    #"llama-index-llms-openai==0.6.21",
+    #"llama-index-llms-anthropic==0.10.10",
+    #"llama-index-llms-google-genai==0.7.4",
+    "chromadb>=0.4.0",
+    "mp-api>=0.45.5",
+    "jupyter_client",
+    "docutils>=0.22.3",
+    "jedi>=0.19.0",
+    "crawl4ai>=0.3.0",
+    "beautifulsoup4>=4.12.0",
+    "requests>=2.31.0",
+    "tavily-python>=0.7.21"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.scripts]
+paimon = "paimon.cli:main"
+
+[build-system]
+requires = ["setuptools>=71"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+paimon = ["knowledge/**/*.txt", "developers/step_rubric.json"]
+
+[tool.pyright]  # still not sure
+include = ["src"]
+exclude = ["tests", "**/__pycache__"]
+typeCheckingMode = "basic"
+pythonVersion = "3.12"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 85
+
+[tool.ruff.lint]
+extend-select = ["E501"]
+isort.split-on-trailing-comma = false
+
+[tool.ruff.per-file-ignores]
+"src/paimon/developers/*.py" = ["E501"]
+"src/paimon/models.py" = ["E501"]
+
+[tool.ruff.format]
+docstring-code-format = true

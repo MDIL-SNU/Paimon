@@ -1,0 +1,88 @@
+Title: Simulation Workflow and Protocols for Diffusivity Analysis in Liquid Electrolyte Systems
+
+## Basics
+
+### Interaction with a user
+Some pieces of information, if provided by the user, can make the task significantly more straightforward. For example, if "molarity" is given, ask the user whether the system's density or molality is also available. This greatly simplifies system modeling.
+
+### Intermolecular interactions
+Dispersion correction can be ignored for solids, but for organic systems like liquid electrolytes, intermolecular interactions require long-range forces to be included in the simulation. Therefore, including a dispersion correction, such as Grimme’s D3(BJ), is essential.
+
+## 1. Multiple Simulation Runs for Statistical Accuracy
+
+Task Types: [[Analysis]], [[Structure Generation]], [[MD]]
+
+The diffusivity value obtained from simulation can be affected by the initial structure—namely, the packing of solvents and salts—as well as by the random seed used to generate initial velocities, even if all other simulation protocols remain the same. Therefore, run at least three independent simulations to obtain the mean and standard deviation of the diffusivity. If resources permit, extend the set to five or even ten independent simulations to tighten the statistical uncertainty.
+
+For every additional run, repeat this step onward so each simulation begins from a freshly generated structure. This ensures each simulation uses a unique initial configuration and captures variability from different packing arrangements and random velocity assignments.
+
+
+## 2. Interpretation and Generation of Initial Structure
+
+Task Types: [[Preparation]], [[Structure Generation]], [[Analysis]]
+
+Solvents, salts, and additives are the components of liquid electrolytes for Li-ion batteries. You should at least obtain information about solvents and salts from the user. Solvents are organic molecules. Conventional liquid electrolytes use at least two kinds of molecules, typically cyclic and linear carbonates. The salts contain Li-ions with anions, which can be dissociated.
+
+When you obtain the input, classify the system into solvent(s), salt, and additives (if present). Obtain the concentration of the salt from the input as well. Determine molecule counts from the user-specified salt concentration (molarity or molality). Adjust molecule counts so the final system size lies between 950 and 1150 atoms to maintain a balance between computational cost and model accuracy. Record the resulting concentration and inform the user of this approximate value before ending the task.
+
+### Packing
+
+Since salt ions will eventually become solvated, treat Li and PF6 separately from this stage to reduce the required equilibration time for diffusivity calculations.
+Li ions must be placed uniformly, with at least 3 Å separation from the other Li ions (considering PBC) to avoid initial clustering. Pack the rest of the atoms with PBC enabled.
+
+### Initial volume estimation without provided target density
+
+Estimate the initial box volume by summing tabulated van-der-Waals volumes. Take the cube root of the resulting volume and multiply the lattice length by 1.1 (10% buffer) to determine the lattice length of a cubic simulation box. Run NPT until the density plateaus (detailed explanation is in the next step), then record that equilibrium density. Use this equilibrium density for all subsequent production runs.
+
+
+## 3. Pre-Equilibration Stage
+
+Task Types: [[Relaxation]], [[MD]], [[Analysis]]
+
+Minimize the structure until the largest residual force < 2.0 eV Å⁻¹. This loose relaxation is only to remove potential artifacts from packing; accurate geometry will be recovered during NPT.
+
+Generally, for MD simulations, a timestep of 1 fs is adequate, but if you increase the hydrogen mass to tritium, you can use a 2 fs timestep, thereby halving the number of MD steps required for the same simulation duration. Note that a timestep that is too large for light H atoms can cause integration errors and unrealistic H-atom positions.
+
+If density is unknown, obtain it by running NPT until density converges. To reduce computational cost, apply the tritium mass to hydrogen atoms, which allows increase the timestep to a 2 fs. Perform an equilibration stage of at least 1 ns under NPT conditions. Monitor the convergence of the potential energy and the system density to determine whether equilibration is sufficient. When both properties oscillate around steady means (see criteria below), consider the system as equilibrated.
+
+If density is already known, run NVT simulations instead.
+
+Extend the NPT or NVT MD in 0.2 ns increments if the convergence is not achieved. Repeat this up to three times or until the convergence is observed. If the equilibration keep failing, restart from packing stage.
+
+Rule of thumb for NPT/NVT equilibration:
+* Discard the first half of the simulation test, and check the convergence in the second half
+* Relative standard deviation of density less than 2% (NPT only)
+* Standard deviation of potential energy per atom < 10 meV/atom
+
+
+## 4. Equilibration Stage
+
+Task Types: [[MD]], [[Analysis]]
+
+If pre-equilibration was performed using tritium-mass hydrogen, restore the normal H mass and lower the timestep (e.g., from 2 fs to 1 fs) for extra equilibration. Continue the simulation from the Pre-Equilibration stage.
+
+If you have conducted NPT simulation in the previous stage to obtain equilibrated density, run a 0.4 ns simulation in the NPT ensemble with a 1 fs timestep. Record the instantaneous density every 10 fs and atomic positions every 10 fs. Average density over the last 0.2 ns. During the final 0.2 ns, ensure all density values deviate by ≤ 10% from the average, then deem the system equilibrated.
+Select the frame within the last 0.2 ns whose instantaneous density is nearest to the average and use it as the starting structure for the next stage.
+
+If you have conducted NVT simulation, run a 0.4 ns simulation in the same ensemble. In this case, equilibrium frame is the last snapshot of the trajectory.
+
+## 5. Production Stage
+
+Task Types: [[MD]]
+
+Begin the NVT production run from the selected equilibrium frame structure. If you continuing from an NPT simulation, assign velocities at the target temperature.
+Run the simulation for 1.1 ns as a trial. Save positions every 100 integration steps so the sampling interval matches diffusivity analysis needs. Use **unwrapped** positions to simplify the calculation of the mean squared displacement.
+
+Note that in this stage, fixing center-of-mass drift throughout the entire simulation is essential for accurate MSD calculations.
+
+## 6. Calculation of Diffusivity
+
+Task Types: [[Analysis]]
+
+First, compute the mean squared displacement (MSD) from the trajectory data. For Li-ions, use the positions of Li atoms. For the salt, choose one marker atom type (P or F) for the anion diffusivity and use it consistently. If you forgot to remove center-of-mass drift in the previous stage, exclude the total center of mass from the atom positions before calculating MSD.
+
+Compute the MSD using time-origin window averaging: for each lag time τ, average (r(t + τ) − r(t))² over all possible time origins t that accommodate that τ.
+
+Exclude the early ballistic (< 10% of total NVT trajectory) and late noisy (last 33%) sections when fitting the MSD. Use a linear fit with an intercept, since liquid systems converge slowly. 
+
+Conduct fitting with the remaining frames. If the R2 value is below 0.97, return to the production stage and continue the simulation for another 1 ns, resuming from the final production stage file.

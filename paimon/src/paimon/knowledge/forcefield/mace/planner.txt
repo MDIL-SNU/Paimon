@@ -1,0 +1,47 @@
+## Force Field
+
+Default: Use MACE-MP with medium size and no dispersion correction unless the task or expert knowledge specifies otherwise.
+If specific force field settings are mentioned elsewhere in the prompt (task description, expert knowledge, etc.), follow those specifications exactly. Otherwise, default to model: mace-mp, size: medium, dispersion: false.
+
+### Available MACE Models
+
+**Currently supported models in LAMMPS (medium size only):**
+- mace-mpa-0: General-purpose universal potential. Default choice.
+- mace-omat-0: Most accurate for phonons and inorganic materials.
+
+Note: Other MACE variants (mace-mp, mace-off, mace-ani-cc, etc.) are not yet available in the LAMMPS environment. For ASE, a broader set of models is accessible.
+
+### Instruction Format for expert agents
+
+Use this exact YAML-like format in your instructions:
+force_field:
+  model: mace-mpa-0
+  size: medium
+  dispersion: false
+
+# With D3 dispersion (ASE only — not supported in LAMMPS):
+force_field:
+  model: mace-mpa-0
+  size: medium
+  dispersion: true
+
+### Capabilities
+
+- Delivers accurate and reliable results for any atomistic system under various conditions
+- Supports D3 dispersion correction (ASE only)
+- Predicts energy, forces, and stress
+- Requires no tuning or configuration—it works out of the box
+- No manual charge assignment is required
+
+### Limitations
+
+- Cannot predict dielectric or electronic properties
+- Cannot predict atomic spin states
+- The system must remain electrically neutral
+- D3 dispersion is only available in ASE; LAMMPS runs do not support it
+- mace-off and mace-ani-cc are restricted to organic/small molecule elements
+
+### Error recovery
+
+- CUDA out-of-memory error: Retry on a GPU node with greater memory capacity. If not available, reduce system size.
+- CPU execution: Do not attempt to run on CPU for production simulations. MACE LAMMPS requires Kokkos GPU acceleration.

@@ -1,0 +1,46 @@
+[project]
+name = "paimon-web"
+version = "0.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "tqdm",
+    "pyyaml",
+    "ase>=3.24.0",
+    "pymatgen>=2025.10.7",
+    "fabric",
+    "termcolor",
+    "llama-index-core==0.14.8",
+    "llama-index>=0.13.1",
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "jinja2>=3.1.0",
+    "python-multipart",
+    "cachetools",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[build-system]
+requires = ["setuptools>=71"]
+build-backend = "setuptools.build_meta"
+
+[tool.pyright]  # still not sure
+include = ["src"]
+exclude = ["tests", "**/__pycache__"]
+typeCheckingMode = "basic"
+pythonVersion = "3.12"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 85
+
+[tool.ruff.lint]
+extend-select = ["E501"]
+isort.split-on-trailing-comma = false
+
+[tool.ruff.format]
+docstring-code-format = true

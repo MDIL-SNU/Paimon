@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Paimon - {{ subtask.subtask_name }}{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb">
+    <a href="/">Runs</a> /
+    <a href="/runs/{{ env_id }}/workspace">{{ env_id[:8] }}</a> /
+    {{ subtask.subtask_name }}
+</nav>
+
+<div class="subtask-header">
+    <h2>{{ subtask.subtask_name }}</h2>
+    <div class="subtask-actions">
+        <a href="/runs/{{ env_id }}/subtasks/{{ subtask.dir_name }}/chat" class="btn-link">Agent Chat</a>
+        {% if subtask.has_critic %}
+        <span class="badge critic">With Critic</span>
+        {% endif %}
+    </div>
+</div>
+
+{% if subtask.token_usage %}
+<section class="token-usage">
+    <h3>Token Usage</h3>
+    <div class="stats">
+        <div class="stat">
+            <span class="label">Total</span>
+            <span class="value">{{ "{:,}".format(subtask.token_usage.total_tokens) }}</span>
+        </div>
+        <div class="stat">
+            <span class="label">Cost</span>
+            <span class="value">${{ "%.4f"|format(subtask.token_usage.total_cost) }}</span>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if subtask.output_tree or subtask.output_files %}
+<section class="output-files">
+    <h3>Output Files{% if subtask.output_files %} ({{ subtask.output_files|length }}){% endif %}</h3>
+    {% if subtask.output_tree %}
+    <div class="file-tree">
+        {% for node in subtask.output_tree %}
+            {% include 'partials/_file_tree_node.html' %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="file-list">
+        {% for file in subtask.output_files %}
+        <div class="file-item">
+            <div class="file-header">
+                <code class="file-name">{{ file }}</code>
+                <div class="file-actions">
+                    <button class="btn-small" onclick="viewFile('{{ file }}')">View</button>
+                    <a href="/api/runs/{{ env_id }}/subtasks/{{ subtask.dir_name }}/files/{{ file }}/download"
+                       class="btn-small">Download</a>
+                </div>
+            </div>
+            <div class="file-content" id="file-{{ loop.index }}" style="display: none;">
+                <pre class="file-preview">Loading...</pre>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+
+<script src="/static/js/file-tree.js"></script>
+<script>
+initFileTree("{{ env_id }}", "{{ subtask.dir_name }}");
+
+{% if not subtask.output_tree %}
+const fileElements = {};
+{% for file in subtask.output_files %}
+fileElements["{{ file }}"] = document.getElementById("file-{{ loop.index }}");
+{% endfor %}
+
+async function viewFile(filename) {
+    const container = fileElements[filename];
+    if (!container) return;
+
+    if (container.style.display === "block") {
+        container.style.display = "none";
+        return;
+    }
+
+    const pre = container.querySelector(".file-preview");
+    pre.textContent = "Loading...";
+    container.style.display = "block";
+
+    try {
+        const url = `/api/runs/${_ftEnvId}/subtasks/${_ftSubtaskName}/files/${filename}`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error("Failed to load file");
+        const data = await resp.json();
+        pre.textContent = data.content;
+    } catch (err) {
+        pre.textContent = "Error loading file: " + err.message;
+    }
+}
+{% endif %}
+</script>
+{% endif %}
+
+{% if subtask.agent_memory %}
+<section class="agent-conversation">
+    <h3>Agent Conversation</h3>
+    <div class="messages">
+        {% for msg in subtask.agent_memory %}
+        <div class="message message-{{ msg.role.value }}">
+            <div class="message-header">
+                <span class="role">{{ msg.role.value }}</span>
+            </div>
+            <div class="message-content">
+                {% for block in msg.blocks %}
+                    {% if block.block_type == "text" %}
+                        <div class="block text-block">
+                            <pre>{{ block.text }}</pre>
+                        </div>
+                    {% elif block.block_type == "thinking" %}
+                        <div class="block thinking-block">
+                            <div class="block-label">Thinking{% if block.num_tokens %} ({{ block.num_tokens }} tokens){% endif %}</div>
+                            {% if block.content %}
+                            <pre>{{ block.content }}</pre>
+                            {% else %}
+                            <em>Thinking process (content not available)</em>
+                            {% endif %}
+                        </div>
+                    {% elif block.block_type == "tool_call" %}
+                        <div class="block tool-call-block">
+                            <div class="block-label">Tool: {{ block.tool_name }}</div>
+                            <pre>{{ block.tool_kwargs }}</pre>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

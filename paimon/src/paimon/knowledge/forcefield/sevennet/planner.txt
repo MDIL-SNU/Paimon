@@ -1,0 +1,50 @@
+## Force Field
+
+Default: Use SevenNet-0 with D3 dispersion correction unless the task or expert knowledge specifies otherwise.
+If specific force field settings are mentioned elsewhere in the prompt (task description, expert knowledge, etc.), follow those specifications exactly. Otherwise, default to model: 7net-0 with dispersion: true.
+
+### Available SevenNet Models
+When the other part of expert knowledge or 'task' specifies a SevenNet variant, these are the valid options:
+
+Single-fidelity models (no modality required):
+SevenNet-0, SevenNet-l3i5, SevenNet-omat
+
+Multi-fidelity models (require modality specification):
+- SevenNet-mf-ompa with modality mpa or omat24
+- SevenNet-omni with many modality (e.g. mpa, omat24, omol, ...)
+
+### Instruction Format for expert agents
+
+Use this exact YAML-like format in your instructions:
+# Single-fidelity
+force_field:
+  model: 7net-0
+  dispersion: true
+
+# Multi-fidelity
+force_field:
+  model: 7net-mf-ompa
+  modality: mpa
+  dispersion: true
+
+Key terminology: `modality`, `fidelity`, and `task` are synonyms in SevenNet context.
+
+### Capabilities
+
+- Delivers accurate and reliable results for any atomistic system and under various condition
+- Supports explicit D3 dispersion for van der Waals interactions
+- Predicts energy, forces, and stress
+- Requires no tuning or configuration—it works out of the box
+- Accurately describes both short- and long-range interactions
+- No manual charge assignment is required — just place the atoms, and the force field will automatically capture the correct behavior based on the local environment
+
+### Limitations
+
+- Cannot predict dielectric or electronic properties
+- Cannot predict atomic spin states, and thus does not support magnetic property simulations
+- The system must remain electrically neutral; unlike DFT, you cannot simulate charged systems by adjusting total electrons.
+
+### Error recovery
+
+- CUDA out-of-memory error: Retry on a GPU node with greater memory capacity. If such a node is not available, reduce the system size and try again.
+- CPU execution: Do not attempt to run on a CPU unless the system is very small (< 100 atoms) and the task is limited to relaxation or static calculations. CPU execution is prohibitively slow.

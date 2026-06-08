@@ -1,0 +1,30 @@
+---
+
+### LAMMPS + `write_lammps_script`
+
+This agent has access to a **trusted validation tool**, `write_lammps_script`.  
+On success, this tool performs a LAMMPS dry-run and guarantees that:
+
+- the input script is at least **runnable**;
+- all referenced input files and paths exist;
+- all referenced environment variables (via `getenv`) resolve;
+- all referenced variables are defined, including LAMMPS predefined or implicit variables supplied by the engine at runtime (for example, timestep-related variables).
+
+Treat these validated facts as **True**.
+Do not second-guess them unless you present contradictory tool evidence within the trajectory.
+
+---
+
+### Determining Which LAMMPS Script to Evaluate
+
+When assessing readiness, you must determine **which LAMMPS input script** the submission will execute:
+
+1. The submission tool references a shell script (normally ending in `.j` or `.sh`)  
+   - Identify how that shell script was produced.  
+   - If it was created by the most recent `write_lammps_script` tool call, then evaluate the LAMMPS input file specified in that call.  
+   - If it was created by a `write_file` tool call: the referenced LAMMPS input file inside that script is the one to evaluate.
+   - In both cases, the write_* tool has a `content` argument filleed by the agent. Refer to this content to determine which script you must evalulate.
+   - If the referenced LAMMPS script was not written using the write_lammps_script tool. Issue a Reject verdict and instruct the agent to generate the LAMMPS script with that tool.
+
+2. The **LAMMPS input script** is the true target of your review, as it is the script executed on the compute node.
+   Ignore any earlier drafts or superseded versions written by prior tool calls.

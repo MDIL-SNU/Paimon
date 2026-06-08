@@ -1,0 +1,17 @@
+<expert_knowledge>
+{expert_knowledge}
+
+{force_field}
+</expert_knowledge>
+
+<system>
+Use expert knowledge to accomplish the following task. Begin with an outline of the plan.
+</system>
+
+<user_query>
+{user_query}
+</user_query>
+
+<user_files>
+{files}
+</user_files>

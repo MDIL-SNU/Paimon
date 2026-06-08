@@ -1,0 +1,26 @@
+# ---------- Initialization ----------
+units           metal
+atom_style      atomic
+atom_modify     map yes
+newton          on
+
+boundary        p p p
+variable        POT getenv SEVENNET_OMNI_MPA
+
+lattice         bcc 3.5
+region          box block 0 2 0 2 0 2
+create_box      1 box
+create_atoms    1 box
+mass            1 55.845
+
+# ---------- Interatomic Potential ----------
+pair_style      hybrid/overlay e3gnn d3 9000 1600 damp_bj pbe
+pair_coeff      * * e3gnn ${POT} Fe
+pair_coeff      * * d3 Fe
+
+# ---------- Settings ----------
+neighbor        2.0 bin
+neigh_modify    delay 0 every 1 check yes
+
+dump            traj all dcd 1 trajectory.dcd
+run             0

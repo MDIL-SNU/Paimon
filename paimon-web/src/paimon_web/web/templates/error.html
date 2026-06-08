@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Error{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <h2>Error</h2>
+    <p>{{ error }}</p>
+
+    {% if traceback %}
+    <details class="traceback-details">
+        <summary>Show traceback</summary>
+        <pre class="traceback">{{ traceback }}</pre>
+    </details>
+    {% endif %}
+
+    <a href="/">Back to runs</a>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+from pymatgen.ext.matproj import MPRester
+from pymatgen.analysis.phase_diagram import Reaction
+from pymatgen.phasediagram import PhaseDiagram, PDPlotter
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+from pymatgen.core.structure import Structure
+
+# Initialize connection
+tmpr = MPRester(api_key: str)  # use as context manager in practice
+
+# Electronic structure
+mpr.get_bandstructure_by_material_id(material_id: str) -> BandStructure
+BandStructure.get_band_gap() -> dict  # {'energy': float, 'direct': bool, 'transition': str}
+mpr.get_dos_by_material_id(material_id: str) -> Dos
+
+# Structural data
+mpr.get_structure_by_material_id(material_id: str) -> Structure
+
+# Materials search
+mpr.materials.summary.search(
+    elements: list[str] = None,
+    band_gap: tuple[float, float] = None,
+    e_above_hull: tuple[float, float] = None,
+    fields: list[str] = None
+) -> list[MPDataDoc]
+
+# Generic query
+mpr.query(
+    criteria: dict,
+    fields: list[str]
+) -> list[dict]
+
+# Entries & phase diagram
+mpr.get_entries_in_chemsys(chemsys: list[str]) -> list[ComputedEntry]
+mpr.get_entries(material_ids: list[str]) -> list[ComputedEntry]
+mpr.get_entry_by_material_id(material_id: str) -> ComputedEntry
+PhaseDiagram(entries: list[ComputedEntry]) -> PhaseDiagram
+PDPlotter(pd).show()
+Reaction.from_entries(entries: list[ComputedEntry]) -> Reaction
+
+# Thermodynamic summaries
+mpr.get_summary_by_material_id(material_id: str) -> dict  # includes 'energy_above_hull'
+
+# Auxiliary properties
+mpr.get_elastic_tensor_by_material_id(material_id: str) -> dict        # {'elastic_tensor': {...}}
+mpr.get_phonon_dos_by_material_id(material_id: str) -> PhononDos
+
+# Material IDs
+mpr.get_materials_ids(formula: str) -> list[str]
+
+# Space-group conversion & export
+SpacegroupAnalyzer(structure: Structure)
+    .get_conventional_standard_structure() -> Structure
+structure.to(filename: str)  # write CIF or other format
