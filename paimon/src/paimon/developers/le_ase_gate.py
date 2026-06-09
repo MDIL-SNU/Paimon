@@ -78,14 +78,16 @@ ase_relaxation_extractor = OpenAIResponses(
 )
 
 # Src reference files pth prefix
-PATH_PRE = "/data2_1/team_llm/cyw/"
+BENCHMARK_DIR = os.getenv("BENCHMARK_DIR")
+if BENCHMARK_DIR is None:
+    raise RuntimeError("BENCHMARK_DIR environment variable is required")
 
 # global state variable; this is okay as we launch different python process
 # for each tast cases every time
 ASE_STAGE_CHECKED = False
 
 MOLECULE_NAME = os.getenv("SKIP_SLURM_MOLECULE", "DEC")
-PATH_PRE_MOL = osp.join(PATH_PRE, f"{MOLECULE_NAME}_LAMMPS")
+PATH_PRE_MOL = osp.join(BENCHMARK_DIR, f"{MOLECULE_NAME}_LAMMPS")
 
 
 # TODO: add DMC, PC composition checks
@@ -184,10 +186,11 @@ from ase.geometry import get_distances
 from sevenn.calculator import SevenNetD3Calculator
 from collections import Counter
 
+BENCHMARK_DIR = k["BENCHMARK_DIR"]
 filepath = k["filepath"]
 molecule = k["molecule"]
 
-ref_atoms = read(f"/data2_1/team_llm/cyw/{molecule}_LAMMPS/_structure_step1/ase_relaxed.extxyz")
+ref_atoms = read(f"{BENCHMARK_DIR}/{molecule}_LAMMPS/_structure_step1/ase_relaxed.extxyz")
 ref_composition = dict(Counter(ref_atoms.get_chemical_symbols()))
 ret = []
 
@@ -252,7 +255,7 @@ else:
             _check_fn_body,
             timeout=360,
             sub_wd=sub_wd,
-            func_kwargs={"filepath": target_fname, "molecule": MOLECULE_NAME},
+            func_kwargs={"BENCHMARK_DIR": BENCHMARK_DIR, "filepath": target_fname, "molecule": MOLECULE_NAME},
             venv_name=venv_name,
         )
     except Exception as e:

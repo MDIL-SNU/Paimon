@@ -241,7 +241,9 @@ print(target_frame_true)
 
 async def LLM_judge(ctx, script_path):
     # script_path is the script_path of the submit_and_wait tool.
-    path_pre = "/data2_1/team_llm/cyw/"
+    BENCHMARK_DIR = os.getenv("BENCHMARK_DIR")
+    if BENCHMARK_DIR is None:
+        raise RuntimeError("BENCHMARK_DIR environment variable is required")
 
     #scratchpad: list[ChatMessage] = await ctx.store.get("scratchpad", default=[])
     env, sub_wd, _ = await get_env_with_sub_wd(ctx)
@@ -323,7 +325,7 @@ async def LLM_judge(ctx, script_path):
 
     molecule_name = os.getenv("SKIP_SLURM_MOLECULE")
 
-    path_pre_mol = osp.join(path_pre, f"{molecule_name}_LAMMPS")
+    path_pre_mol = osp.join(BENCHMARK_DIR, f"{molecule_name}_LAMMPS")
     path_pre_step = osp.join(path_pre_mol, lammps_step)
 
     target_frame_true = None
